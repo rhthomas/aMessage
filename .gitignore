@@ -1,0 +1,5 @@
+doc/html/
+*.out
+*.o
+*.deps
+shared/
