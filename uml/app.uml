@@ -1,0 +1,46 @@
+@startuml
+
+!define E "External Node"
+!define P Physical
+!define D "Data Link"
+!define N Network
+!define T Transport
+!define A Application
+
+participant E
+box "Network Stack" #LightGray
+participant P
+participant D
+participant N
+participant T
+participant A
+end box
+
+== Incoming Packet ==
+
+E --> P
+P -> D: dll_rx()
+D -> N: net_rx()
+N -> T: tran_rx()
+T -> A: app_rx()
+
+== Outgoing Packet ==
+
+A -> T: tran_tx()
+T -> N: net_tx()
+N -> D: dll_tx()
+D -> P: phy_tx()
+P --> E
+
+== Link State Advertisment ==
+
+N -> D: dll_tx()
+D -> P: phy_tx()
+
+P --> E
+
+E --> P
+P -> D: dll_rx()
+D -> N: net_rx()
+
+@enduml
