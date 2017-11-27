@@ -1,0 +1,28 @@
+CC        = gcc
+OBJ       = $(patsubst %.c,%.o,$(SRC))
+INC       = $(addprefix -I,$(sort $(dir $(SRC)))) -I../shared
+CFLAGS    = $(INC) -Wall
+MAKEFLAGS = -j4 --quiet
+
+default: Makefile.deps $(TARGET).out
+all: default
+
+debug: CFLAGS += -DDEBUG
+debug: default
+
+-include Makefile.deps
+
+Makefile.deps: $(SRC)
+	$(CC) $(CFLAGS) -MM $^ > Makefile.deps
+
+%.o: %.c
+	@echo "  CC \t $<"
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(TARGET).out: $(OBJ)
+	@echo "Building $@"
+	$(CC) $(CFLAGS) $^ -o $@
+
+clean:
+	@echo "Cleaning..."
+	-rm $(OBJ) $(TARGET).out Makefile.deps
