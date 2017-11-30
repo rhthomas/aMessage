@@ -80,7 +80,7 @@ void net_tick(void)
     // }
 }
 
-uint8_t * net_to_array(net_packet_t *p)
+uint8_t *net_to_array(net_packet_t *p)
 {
     uint8_t size = p->length;
     uint8_t data[size];
@@ -98,4 +98,9 @@ net_packet_t net_to_struct(uint8_t *data, uint8_t length)
         packet.elem[i] = data[i];
     }
     return packet;
+}
+
+void net_rx_handler(net_packet_t p)
+{
+    // TODO write handler
 }

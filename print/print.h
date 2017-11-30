@@ -1,3 +1,9 @@
+/**
+
+    Print functions for testbenches.
+
+*/
+
 #ifndef PRINT_H
 #define PRINT_H
 
@@ -6,10 +12,19 @@
 
 #include "net.h"
 
+/**
+    Format byte arrays into a grid.
+*/
 void format(int i);
 
-void print_struct(net_packet_t *p);
+/**
+    Print structures.
+*/
+void print_struct(const net_packet_t p);
 
+/**
+    Print byte arrays.
+*/
 void print_array(uint8_t *a, uint8_t length);
 
 #endif // PRINT_H

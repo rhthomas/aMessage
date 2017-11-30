@@ -23,7 +23,7 @@
     @param  length : Length of data.
     @return XOR sum of data.
 */
-uint8_t xor_sum(net_packet_t* p);
+uint8_t xor_sum(net_packet_t *p);
 
 /**
     @brief  Validate checksum.
@@ -33,6 +33,6 @@ uint8_t xor_sum(net_packet_t* p);
     @retval ERROR_OK : Checksum passed.
     @retval ERROR_INV_CKSUM : Checksum invalid.
 */
-error_t valid_cksum(net_packet_t* p);
+error_t valid_cksum(net_packet_t *p);
 
-#endif /* CKSUM_H */
+#endif // CKSUM_H

@@ -14,6 +14,10 @@
 #include <stdint.h>
 #include "errors.h" // has error_t
 
+#ifndef NULL
+#define NULL (void *)0
+#endif // NULL
+
 /// NET packet content type.
 typedef enum {
     LSA, ///< Link state advertisement.
@@ -90,12 +94,19 @@ error_t net_send_broadcast();
 /**
     @brief  Convert NET packet to byte array.
 */
-uint8_t * net_to_array(net_packet_t *p);
+uint8_t *net_to_array(net_packet_t *p);
 
 /**
     @brief  Convert byte array to NET packet.
 */
 net_packet_t net_to_struct(uint8_t *data, uint8_t length);
+
+/**
+    @brief  Handles receiving packets.
+
+    @param  p : Packet to handle.
+*/
+void net_rx_handler(net_packet_t p);
 
 
 //---------- buffers ----------//
