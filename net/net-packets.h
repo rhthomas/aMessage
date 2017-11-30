@@ -51,8 +51,11 @@ net_packet_t net_lsa_packet(uint8_t v, uint8_t src);
 
     @param  v : Version of service.
     @param  src : Address of sender.
+    @param  data : Byte array of data to send.
+    @param  data_len : Length of data array.
     @return A NET packet.
 */
-net_packet_t net_bcast_packet(uint8_t v, uint8_t src, uint8_t *data);
+net_packet_t net_bcast_packet(uint8_t v, uint8_t src, uint8_t *data,
+    uint8_t data_len)
 
 #endif // NET_PACKETS_H
