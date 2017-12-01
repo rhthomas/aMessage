@@ -12,10 +12,11 @@
 #define NET_H
 
 #include <stdint.h>
+
 #include "errors.h" // has error_t
-#include "cksum.h"
-#include "net-packets.h"
 #include "node-tables.h"
+// #include "cksum.h"
+// #include "net-packets.h"
 
 #ifndef NULL
 #define NULL (void *)0
@@ -59,11 +60,11 @@ typedef union {
 
     @param  data : Byte array being added to buffer.
     @param  length : Length of byte array.
-    @param  addr : Address of sender (current node).
+    @param  mac : Address of node.
     @retval ERROR_OK : No errors.
     @retval ERROR_NET_NOBUFS : NET buffer is full.
 */
-error_t net_tx(uint8_t *data, uint8_t length, uint8_t addr);
+error_t net_tx(uint8_t *data, uint8_t length, uint8_t mac);
 
 /**
     @brief  Add data to the RX buffer.
@@ -72,11 +73,11 @@ error_t net_tx(uint8_t *data, uint8_t length, uint8_t addr);
 
     @param  data : Byte array being added to buffer.
     @param  length : Length of byte array.
-    @param  addr : Address of sender (current node).
+    @param  mac : Address of node.
     @retval ERROR_OK : No errors.
     @retval ERROR_NET_NOBUFS : NET buffer is full.
 */
-error_t net_rx(uint8_t *data, uint8_t length, uint8_t addr);
+error_t net_rx(uint8_t *data, uint8_t length, uint8_t mac);
 
 /**
     @brief  Statemachine for NET layer operation.
@@ -92,14 +93,13 @@ void net_tick(void);
 /**
     @brief  Handles the transmission of packets.
 
-    Mainly passing APP packets from TRAN down to DLL. Routing will be done
-    here?
+    Pops TRAN data from TX buffer and pads it with NET packet fields. Then
+    passes down to DLL.
 
-    @param  p : Packet to be sent.
     @retval ERROR_OK : No errors.
     @retval ERROR_DLL_NOBUFS : DLL buffer is full.
 */
-error_t net_tx_handler(net_packet_t p);
+error_t net_tx_handler(void);
 
 /**
     @brief  Handles receiving packets.
@@ -118,7 +118,7 @@ error_t net_rx_handler(net_packet_t p);
     @retval ERROR_OK : No errors.
     @retval ERROR_DLL_NOBUFS : DLL buffer is full.
 */
-error_t net_send_lsa(void)
+error_t net_send_lsa(void);
 
 //---------- utility functions ----------//
 
@@ -138,13 +138,27 @@ net_packet_t net_to_struct(uint8_t *data, uint8_t length);
 typedef struct {
     uint8_t *data;   ///< Data array.
     uint8_t  length; ///< Length of array.
+    uint8_t  mac;    ///< MAC address.
 } bytestring_t;
 
-/// Down-stack buffer.
-bytestring_t net_tx_buffer;
+#define MAX_BUFFER_SIZE 2
 
-/// Up-stack buffer.
-bytestring_t net_rx_buffer;
+bytestring_t net_tx_buffer[MAX_BUFFER_SIZE];
+uint8_t net_tx_size = 0;
+
+bytestring_t net_rx_buffer[MAX_BUFFER_SIZE];
+uint8_t net_rx_size = 0;
+
+/**
+    @brief  Returns first element in buffer.
+*/
+error_t net_buffer_push(bytestring_t *buffer, uint8_t *size, uint8_t *data,
+    uint8_t length, uint8_t mac);
+
+/**
+    @brief  Returns first element in buffer.
+*/
+bytestring_t net_buffer_pop(bytestring_t *buffer, uint8_t *size);
 
 //---------- states ----------//
 
@@ -156,5 +170,15 @@ typedef enum {
 
 // memory for present/next states
 state_t pres_s, next_s;
+
+//---------- temp functions ----------//
+
+error_t dll_tx(uint8_t *data, uint8_t length, uint8_t dest);
+error_t tran_rx(uint8_t *data, uint8_t length, uint8_t src);
+
+
+// TODO refactor code
+#include "cksum.h"
+#include "net-packets.h"
 
 #endif // NET_H

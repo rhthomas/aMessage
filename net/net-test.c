@@ -5,7 +5,6 @@
 */
 
 #include "net.h"
-#include "net-packets.h"
 #include "print.h"
 
 int main()
@@ -31,7 +30,7 @@ int main()
     // );
     printf("broadcast packet\n"); // PASS
     print_struct(
-        net_bcast_packet(1, 0xAA, &tran_data)
+        net_bcast_packet(1, 0xAA, &tran_data, sizeof(tran_data))
     );
 
     // incomming data from dll.

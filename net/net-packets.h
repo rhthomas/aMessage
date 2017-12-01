@@ -56,6 +56,6 @@ net_packet_t net_lsa_packet(uint8_t v, uint8_t src);
     @return A NET packet.
 */
 net_packet_t net_bcast_packet(uint8_t v, uint8_t src, uint8_t *data,
-    uint8_t data_len)
+    uint8_t data_len);
 
 #endif // NET_PACKETS_H
