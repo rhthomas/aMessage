@@ -42,27 +42,35 @@ void net_tick(void)
 {
     error_t err = 0; // error monitor
 
+    // TODO modulo block
+    update_node_table(&knwon_nodes, &num_nodes);
+
     pres_s = next_s;
     switch (pres_s) {
         case TX:
-            // pass up to TRAN layer.
-            err = tran_rx(
-                p.tran,
-                p.length-7, // size of TRAN data only
-                p.src_addr // address of sender
-            );
-            // TODO act on returned errors
-            // use if statements to determine next state
-            // next_s = IDLE;
+            if (net_tx_buffer) {
+                // TODO handle TX packets
+                if (err) {
+                    next_s = pres_s;
+                    break;
+                }
+            }
+            next_s = RX;
             break;
         case RX:
-            // pass rx data to handler
-            err = net_rx_handler(
-                net_to_struct(&net_rx_buffer, sizeof(net_rx_buffer))
-            );
-            // TODO act on returned errors
-            // use if statements to determine next state
-            // next_s = IDLE;
+            // only do stuff if there are things in the RX buffer
+            if (net_rx_buffer) {
+                // pass rx data to handler
+                err = net_rx_handler(
+                    net_to_struct(&net_rx_buffer, sizeof(net_rx_buffer))
+                );
+                // if error, try this again on next tick?
+                if (err) {
+                    next_s = pres_s;
+                    break;
+                }
+            }
+            next_s = TX;
             break;
         default:
             break;
@@ -74,12 +82,6 @@ void net_tick(void)
 error_t net_tx_handler(net_packet_t p)
 {
     // TODO write this function
-    err = tran_rx(
-        p.tran,
-        p.length-7, // size of TRAN data only
-        p.src_addr // address of sender
-    );
-    // TODO act on returned errors
 }
 
 error_t net_rx_handler(net_packet_t p)
@@ -104,7 +106,6 @@ error_t net_rx_handler(net_packet_t p)
                     p.length,
                     p.src_addr
                 );
-                // TODO act on returned errors
                 return err;
             case 2: // link state routing
                 // TODO Not yet implemented.
@@ -116,26 +117,45 @@ error_t net_rx_handler(net_packet_t p)
     // packet meant for me, what do?
     switch (p.type) {
         case LSA:
-            // received LSA, queue up ACK reply
-            // net_tx_buffer = {
-            //     net_to_array(
-            //         // src->dest, dest->src (or LOCAL_ADDRESS)
-            //         net_ack_packet(p.vers, p.dest_addr, p.src_addr)
-            //     ),
-            //     p.length
-            // };
-
-            // should I be calling this?
-            err = net_tx(
-                net_to_array(&p),
-                p.length,
-                p.src_addr
-            );
-            // TODO act on returned errors
-            return err;
+            // search for node index, -1 if it does not exist
+            int8_t index = search_list(&known_nodes, p.src_addr, &num_nodes);
+            if (index == -1) {
+                // add to list of known nodes
+                new_node(
+                    &known_nodes,
+                    (node_t){p.src_addr, START_AGE},
+                    &num_nodes
+                );
+            } else {
+                // node in list, update age
+                known_nodes[index].age = START_AGE;
+            }
+            // reply if original message was NOT already an ACK
+            if (p.ack == 0) {
+                // received LSA, queue up ACK reply
+                net_packet_t reply = net_ack_packet(
+                    p.vers,
+                    // reverse addresses
+                    p.dest_addr,
+                    p.src_addr // LOCAL_ADDRESS
+                );
+                // add to tx buffer
+                err = dll_tx(
+                    net_to_array(&reply),
+                    reply.length,
+                    reply.dest_addr // ?
+                );
+                return err;
+            }
+            // if it was already an ACK, just add node and return
+            return ERROR_OK;
         case APP:
             // pass up to TRAN layer.
-            net_tx_handler(p);
+            err = tran_rx(
+                p.tran,
+                p.length - 7, // 7 bytes of NET stuff
+                p.src_addr
+            );
             break;
         case LSP:
             // TODO Not yet implemented.
@@ -151,7 +171,7 @@ error_t net_rx_handler(net_packet_t p)
 error_t net_send_lsa(void)
 {
     net_packet_t p = net_lsa_packet(VERSION, LOCAL_ADDRESS);
-    net_tx(
+    dll_tx(
         net_to_array(&p),
         p.length,
         LOCAL_ADDRESS

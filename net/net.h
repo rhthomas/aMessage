@@ -15,6 +15,7 @@
 #include "errors.h" // has error_t
 #include "cksum.h"
 #include "net-packets.h"
+#include "node-tables.h"
 
 #ifndef NULL
 #define NULL (void *)0
@@ -49,13 +50,12 @@ typedef union {
     unsigned char elem[0];
 } net_packet_t;
 
-
 //---------- public methods ----------//
 
 /**
     @brief  Add data to the TX buffer.
 
-    Called by TRAN layer or NET layer?
+    Called by TRAN layer.
 
     @param  data : Byte array being added to buffer.
     @param  length : Length of byte array.
@@ -87,7 +87,6 @@ error_t net_rx(uint8_t *data, uint8_t length, uint8_t addr);
 */
 void net_tick(void);
 
-
 //---------- internal functions ----------//
 
 /**
@@ -113,11 +112,13 @@ error_t net_rx_handler(net_packet_t p);
 /**
     @brief  Queues up an LSA to transmit.
 
+    Call when the node comes up, and every 10ms just to remind remote nodes that
+    this node is still alive.
+
     @retval ERROR_OK : No errors.
     @retval ERROR_DLL_NOBUFS : DLL buffer is full.
 */
 error_t net_send_lsa(void)
-
 
 //---------- utility functions ----------//
 
@@ -131,7 +132,6 @@ uint8_t *net_to_array(net_packet_t *p);
 */
 net_packet_t net_to_struct(uint8_t *data, uint8_t length);
 
-
 //---------- buffers ----------//
 
 /// Byte string buffer for passing arrays around.
@@ -140,12 +140,11 @@ typedef struct {
     uint8_t  length; ///< Length of array.
 } bytestring_t;
 
-/// Up-stack buffer.
+/// Down-stack buffer.
 bytestring_t net_tx_buffer;
 
-/// Down-stack buffer.
+/// Up-stack buffer.
 bytestring_t net_rx_buffer;
-
 
 //---------- states ----------//
 
@@ -157,6 +156,5 @@ typedef enum {
 
 // memory for present/next states
 state_t pres_s, next_s;
-
 
 #endif // NET_H
