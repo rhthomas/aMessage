@@ -14,11 +14,11 @@
 #include <stdint.h>
 
 #define MAX_NODES 7
-#define START_AGE 255 // 255 decrements with 10ms function call = 2.55s life
+#define START_AGE 5000 // 1ms function call period = 5s life
 
 typedef struct {
-    uint8_t addr;
-    uint8_t age;
+    uint8_t  addr;
+    uint16_t age;
 } node_t;
 
 node_t known_nodes[MAX_NODES];

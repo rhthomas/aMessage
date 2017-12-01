@@ -37,23 +37,17 @@ error_t net_rx(uint8_t *data, uint8_t length, uint8_t mac)
 }
 
 // do stuff with buffers, i.e. if your TX buffer has stuff, pass to DLL.
-// TODO next-state logic
 void net_tick(void)
 {
     error_t err = 0; // error monitor
 
-    // TODO modulo block
-    // NOTE need global count variable from PHY
     update_node_table(&known_nodes, &num_nodes);
 
     pres_s = next_s;
     switch (pres_s) {
         case TX:
             if (net_tx_size > 0) {
-                // TODO write this
-                err = net_tx_handler(
-                    // tran packet in buffer
-                );
+                err = net_tx_handler();
                 if (err) {
                     next_s = pres_s;
                     break;
@@ -89,12 +83,10 @@ void net_tick(void)
 
 error_t net_tx_handler(void)
 {
-    error_t err = 0;
-    // TODO write this function
     bytestring_t bs = net_buffer_pop(&net_tx_buffer, &net_tx_size);
     // pad TRAN data with net stuff
     net_packet_t p = {
-        .vers = v,
+        .vers = VERSION,
         .hop  = 0b111,
         .type = APP,
         .ack  = 0,
@@ -106,9 +98,12 @@ error_t net_tx_handler(void)
         .cksum     = 0x0000
     };
     p.cksum = xor_sum(&p);
+
     // pass down to dll
-    err = dll_tx(
-        
+    return dll_tx(
+        net_to_array(&p),
+        p.length,
+        p.dest_addr
     );
 }
 
