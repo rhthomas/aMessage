@@ -1,9 +1,9 @@
 #include "net-packets.h"
 
-net_packet_t net_ack_packet(uint8_t v, uint8_t src, uint8_t dest)
+net_packet_t net_ack_packet(uint8_t src, uint8_t dest)
 {
     net_packet_t p = {
-        .vers = v,
+        .vers = VERSION,
         .hop  = 0b111,
         .type = LSA, // replying to LSA from new node
         .ack  = 0b1,
@@ -19,10 +19,10 @@ net_packet_t net_ack_packet(uint8_t v, uint8_t src, uint8_t dest)
     return p;
 }
 
-net_packet_t net_lsa_packet(uint8_t v, uint8_t src)
+net_packet_t net_lsa_packet(uint8_t src)
 {
     net_packet_t p = {
-        .vers = v,
+        .vers = VERSION,
         .hop  = 0b111,
         .type = LSA,
         .ack  = 0,
@@ -44,11 +44,10 @@ net_packet_t net_lsa_packet(uint8_t v, uint8_t src)
 //
 // }
 
-net_packet_t net_bcast_packet(uint8_t v, uint8_t src, uint8_t *data,
-    uint8_t data_len)
+net_packet_t net_bcast_packet(uint8_t src, uint8_t *data, uint8_t data_len)
 {
     net_packet_t p = {
-        .vers = v,
+        .vers = VERSION,
         .hop  = 0b111,
         .type = APP,
         .ack  = 0,
