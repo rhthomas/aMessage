@@ -94,7 +94,7 @@ void net_tick(void);
     @brief  Handles the transmission of packets.
 
     1. Check the TX buffer has stuff in.
-    2. Pop data from buffer and convert to structure.
+    2. Pop TRAN data from buffer and pad with NET fields.
     3. Pass down to DLL for transmission.
 
     @retval ERROR_OK : No errors.
