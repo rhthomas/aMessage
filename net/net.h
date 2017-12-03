@@ -93,8 +93,9 @@ void net_tick(void);
 /**
     @brief  Handles the transmission of packets.
 
-    Pops TRAN data from TX buffer and pads it with NET packet fields. Then
-    passes down to DLL.
+    1. Check the TX buffer has stuff in.
+    2. Pop data from buffer and convert to structure.
+    3. Pass down to DLL for transmission.
 
     @retval ERROR_OK : No errors.
     @retval ERROR_DLL_NOBUFS : DLL buffer is full.
@@ -102,12 +103,18 @@ void net_tick(void);
 error_t net_tx_handler(void);
 
 /**
-    @brief  Handles receiving packets.
+    @brief  Handles packets in RX buffer.
 
-    @param  p : Packet to handle.
+    1. Check the RX buffer has stuff in.
+    2. Pop data from buffer and convert to structure.
+    3. Validate checksum, return ERROR_INV_CKSUM if they don't match.
+    4. Check message is addressed to this node.
+    5. Process message.
+
     @return error_t
+    @retval ERROR_OK : If no errors or the buffer is empty.
 */
-error_t net_rx_handler(net_packet_t p);
+error_t net_rx_handler(void);
 
 /**
     @brief  Queues up an LSA to transmit.

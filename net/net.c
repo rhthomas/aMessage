@@ -41,36 +41,24 @@ void net_tick(void)
 {
     error_t err = 0; // error monitor
 
+    net_send_lsa(); // do this every 3s or something
     update_node_table(&known_nodes, &num_nodes);
 
     pres_s = next_s;
     switch (pres_s) {
         case TX:
-            if (net_tx_size > 0) {
-                err = net_tx_handler();
-                if (err) {
-                    next_s = pres_s;
-                    break;
-                }
+            err = net_tx_handler();
+            if (err) {
+                next_s = pres_s;
+                break;
             }
             next_s = RX;
             break;
         case RX:
-            // only do stuff if there are things in the RX buffer
-            if (net_rx_size > 0) {
-                // pass rx data to handler
-                bytestring_t bs = net_buffer_pop(
-                    &net_rx_buffer,
-                    &net_rx_size
-                );
-                err = net_rx_handler(
-                    net_to_struct(bs.data, bs.length)
-                );
-                // if error, try this again on next tick?
-                if (err) {
-                    next_s = pres_s;
-                    break;
-                }
+            err = net_rx_handler();
+            if (err) {
+                next_s = pres_s;
+                break;
             }
             next_s = TX;
             break;
@@ -83,7 +71,14 @@ void net_tick(void)
 
 error_t net_tx_handler(void)
 {
+    // return if the buffer is empty
+    if (net_tx_size == 0) {
+        return ERROR_OK;
+    }
+
+    // TODO routing in here?
     bytestring_t bs = net_buffer_pop(&net_tx_buffer, &net_tx_size);
+
     // pad TRAN data with net stuff
     net_packet_t p = {
         .vers = VERSION,
@@ -99,7 +94,7 @@ error_t net_tx_handler(void)
     };
     p.cksum = xor_sum(&p);
 
-    // pass down to dll
+    // pass down to dll, return error
     return dll_tx(
         net_to_array(&p),
         p.length,
@@ -107,8 +102,20 @@ error_t net_tx_handler(void)
     );
 }
 
-error_t net_rx_handler(net_packet_t p)
+error_t net_rx_handler(void)
 {
+    // return if the buffer is empty
+    if (net_rx_size == 0) {
+        return ERROR_OK;
+    }
+
+    // pop data out of rx buffer
+    bytestring_t bs = net_buffer_pop(
+        &net_rx_buffer,
+        &net_rx_size
+    );
+    net_packet_t p = net_to_struct(bs.data, bs.length);
+
     // check checksum
     error_t err = 0;
     if ((err = valid_cksum(&p))) {
@@ -180,6 +187,7 @@ error_t net_rx_handler(net_packet_t p)
                 p.length - 7, // 7 bytes of NET stuff
                 p.src_addr
             );
+            return err;
             break;
         case LSP:
             // TODO Not yet implemented.
