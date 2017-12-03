@@ -18,20 +18,20 @@ int main()
     // test making packets
     printf("ack packet\n"); // PASS
     print_struct(
-        net_ack_packet(1, 0xAA, 0xAB)
+        net_ack_packet(0xAA, 0xAB)
     );
     printf("lsa packet\n"); // PASS
     print_struct(
-        net_lsa_packet(1, 0xAA)
+        net_lsa_packet(0xAA)
+    );
+    printf("broadcast packet\n"); // PASS
+    print_struct(
+        net_bcast_packet(0xAA, &tran_data, sizeof(tran_data))
     );
     // TODO Not yet implemented.
     // print_struct(
     //     net_lsp_packet(1, 0xAA, 0xAB, /* table */);
     // );
-    printf("broadcast packet\n"); // PASS
-    print_struct(
-        net_bcast_packet(1, 0xAA, &tran_data, sizeof(tran_data))
-    );
 
     // incomming data from dll.
     uint8_t inc_data[] = {

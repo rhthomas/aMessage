@@ -6,6 +6,9 @@
 
 #include "net.h"
 
+uint8_t net_tx_size = 0;
+uint8_t net_rx_size = 0;
+
 //---------- public methods ----------//
 
 // add data to the TX buffer
@@ -89,7 +92,7 @@ error_t net_tx_handler(void)
         .src_addr  = LOCAL_ADDRESS,
         .dest_addr = bs.mac,
         .length    = bs.length + 7,
-        .tran      = bs.data,
+        .tran      = {*bs.data},
         .cksum     = 0x0000
     };
     p.cksum = xor_sum(&p);
@@ -165,7 +168,6 @@ error_t net_rx_handler(void)
             if (p.ack == 0) {
                 // received LSA, queue up ACK reply
                 net_packet_t reply = net_ack_packet(
-                    p.vers,
                     // reverse addresses
                     p.dest_addr,
                     p.src_addr // LOCAL_ADDRESS
@@ -202,8 +204,8 @@ error_t net_rx_handler(void)
 
 error_t net_send_lsa(void)
 {
-    net_packet_t p = net_lsa_packet(VERSION, LOCAL_ADDRESS);
-    dll_tx(
+    net_packet_t p = net_lsa_packet(LOCAL_ADDRESS);
+    return dll_tx(
         net_to_array(&p),
         p.length,
         LOCAL_ADDRESS
@@ -257,4 +259,16 @@ bytestring_t net_buffer_pop(bytestring_t *buffer, uint8_t *size)
     *size -= 1;
     // return old data
     return out;
+}
+
+//---------- temp functions ----------//
+
+error_t dll_tx(uint8_t *data, uint8_t length, uint8_t dest)
+{
+    return ERROR_OK;
+}
+
+error_t tran_rx(uint8_t *data, uint8_t length, uint8_t src)
+{
+    return ERROR_OK;
 }

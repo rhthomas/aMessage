@@ -1,9 +1,11 @@
 #include "node-tables.h"
 
+uint8_t num_nodes;
+
 void new_node(node_t *list, node_t add, uint8_t *num_items)
 {
     if (*num_items >= 0 && *num_items < MAX_NODES) {
-        list[*num_items] = value;
+        list[*num_items] = add;
         *num_items += 1;
     }
 }

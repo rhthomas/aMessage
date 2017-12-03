@@ -45,7 +45,7 @@ typedef union {
         uint8_t    src_addr;
         uint8_t    dest_addr;
         uint8_t    length;
-        uint8_t   *tran;
+        uint8_t    tran[121];
         uint16_t   cksum;
     };
     unsigned char elem[0];
@@ -151,10 +151,10 @@ typedef struct {
 #define MAX_BUFFER_SIZE 2
 
 bytestring_t net_tx_buffer[MAX_BUFFER_SIZE];
-uint8_t net_tx_size = 0;
+extern uint8_t net_tx_size;
 
 bytestring_t net_rx_buffer[MAX_BUFFER_SIZE];
-uint8_t net_rx_size = 0;
+extern uint8_t net_rx_size;
 
 /**
     @brief  Returns first element in buffer.

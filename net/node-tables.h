@@ -22,7 +22,7 @@ typedef struct {
 } node_t;
 
 node_t known_nodes[MAX_NODES];
-uint8_t num_nodes = 0; // keeps track of static array size
+extern uint8_t num_nodes; // keeps track of static array size
 
 /**
     @brief  Add new nodes to the list of known nodes.
