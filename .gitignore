@@ -1,5 +1,7 @@
-doc/html/
+docs/html/
 *.out
 *.o
 *.deps
 shared/
+sandbox/
+*.txt
