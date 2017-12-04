@@ -6,6 +6,8 @@
 
 #include "net.h"
 
+//---------- global variables ----------//
+
 uint8_t net_tx_size = 0;
 uint8_t net_rx_size = 0;
 
@@ -142,6 +144,8 @@ error_t net_rx_handler(void)
                 return err;
             case 2: // link state routing
                 // TODO Not yet implemented.
+                // add to table and continue flooding
+                // might be worth putting this case before p.vers == 1?
             default:
                 return ERROR_OK;
         }
