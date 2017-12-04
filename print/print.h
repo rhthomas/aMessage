@@ -20,7 +20,7 @@ void format(int i);
 /**
     Print structures.
 */
-void print_struct(const net_packet_t p);
+void print_struct(net_packet_t p);
 
 /**
     Print byte arrays.

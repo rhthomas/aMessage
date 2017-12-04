@@ -6,7 +6,7 @@ void format(int i)
     else printf("\t");
 }
 
-void print_struct(const net_packet_t p)
+void print_struct(net_packet_t p)
 {
     for (int i=0; i<p.length; i++) {
         printf("0x%02x", p.elem[i]);

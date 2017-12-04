@@ -1,15 +1,9 @@
-/**
-
-    Testbench for checksum functions.
-
-*/
-
 #include "cksum.h"
 
 uint8_t xor_sum(net_packet_t *p)
 {
     uint16_t sum = 0;
-    for (int byte = 0; byte < p->length-2; byte++) {
+    for (int byte = 0; byte < p->length; byte++) {
         sum ^= p->elem[byte];
     }
     return sum;

@@ -145,7 +145,6 @@ error_t net_rx_handler(void)
             case 2: // link state routing
                 // TODO Not yet implemented.
                 // add to table and continue flooding
-                // might be worth putting this case before p.vers == 1?
             default:
                 return ERROR_OK;
         }

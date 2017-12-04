@@ -6,6 +6,12 @@
 
     @brief  Checksum functions for NET layer.
 
+    TRAN and DLL layers use 8/16-bit CRC which will slow the processor down.
+    Adding an extra CRC is unecessary since the data will be CRC'd twice anyway.
+    At the NET layer we implement a simple XOR checksum, which does not entirely
+    validate the integrity of the message, however further errors will be caught
+    by either TRAN or DLL (based on the direction of the data).
+
 */
 
 #ifndef CKSUM_H

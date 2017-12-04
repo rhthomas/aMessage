@@ -1,6 +1,6 @@
 CC        = clang
 OBJ       = $(patsubst %.c,%.o,$(SRC))
-INC       = $(addprefix -I,$(sort $(dir $(SRC)))) -I../shared
+INC       = $(addprefix -I,$(sort $(dir $(SRC)))) -I../../shared
 CFLAGS    = $(INC) -Wall
 MAKEFLAGS = -j4 --quiet
 
