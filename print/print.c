@@ -8,8 +8,13 @@ void format(int i)
 
 void print_struct(net_packet_t p)
 {
-    for (int i=0; i<p.length; i++) {
+    for (uint8_t i=0; i<128; i++) {
         printf("0x%02x", p.elem[i]);
+        // skip any unused TRAN data
+        if (i == p.length-2) {
+            // jump to cksum field
+            i = 125;
+        }
         format(i);
     }
     printf("\r\n\n");
@@ -17,8 +22,13 @@ void print_struct(net_packet_t p)
 
 void print_array(uint8_t *a, uint8_t length)
 {
-    for (int i=0; i<length; i++) {
+    for (uint8_t i=0; i<128; i++) {
         printf("0x%02x", a[i]);
+        // skip any unused TRAN data
+        if (i == a[4]-2) {
+            // jump to cksum field
+            i = 125;
+        }
         format(i);
     }
     printf("\r\n\n");

@@ -6,6 +6,8 @@
 
     @brief  NET layer function prototypes.
 
+    @TODO   Discard data outside of length field, except checksum.
+
 */
 
 #ifndef NET_H
@@ -34,7 +36,7 @@ typedef enum {
 
 /// NET packet structure
 typedef union {
-    struct { // __attribute__((__packed__)) {
+    struct { //__attribute__((__packed__)) {
         // ctrl byte (LSb first)
         uint8_t    vers : 2;
         uint8_t    hop  : 3;
@@ -143,9 +145,9 @@ net_packet_t net_to_struct(uint8_t *data, uint8_t length);
 
 /// Byte string buffer for passing arrays around.
 typedef struct {
-    uint8_t *data;   ///< Data array.
-    uint8_t  length; ///< Length of array.
-    uint8_t  mac;    ///< MAC address.
+    uint8_t data[121]; ///< Data array.
+    uint8_t length;    ///< Length of array.
+    uint8_t mac;       ///< MAC address.
 } bytestring_t;
 
 #define MAX_BUFFER_SIZE 2

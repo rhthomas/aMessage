@@ -46,7 +46,8 @@ void net_tick(void)
 {
     error_t err = 0; // error monitor
 
-    net_send_lsa(); // do this every 3s or something
+    // TODO do something with this error?
+    err = net_send_lsa(); // do this every 3s or something
     update_node_table(&known_nodes, &num_nodes);
 
     pres_s = next_s;
@@ -219,11 +220,14 @@ error_t net_send_lsa(void)
 
 uint8_t *net_to_array(net_packet_t *p)
 {
-    uint8_t size = p->length;
-    uint8_t data[size];
-
-    for (int i=0; i<size; i++) {
+    uint8_t data[128] = {0};
+    for (uint8_t i=0; i<sizeof(data); i++) {
         data[i] = p->elem[i];
+        if (i == p->length-2) {
+            // skip to end of array
+            i = 125;
+            // 2 bytes left after i++ for cksum
+        }
     }
     return data;
 }
@@ -233,6 +237,11 @@ net_packet_t net_to_struct(uint8_t *data, uint8_t length)
     net_packet_t packet;
     for (int i=0; i<length; i++) {
         packet.elem[i] = data[i];
+        // skip any unused TRAN data
+        if (i == data[4]-2) {
+            // jump to cksum field
+            i = 125;
+        }
     }
     return packet;
 }
@@ -243,7 +252,7 @@ error_t net_buffer_push(bytestring_t *buffer, uint8_t *size, uint8_t *data,
     uint8_t length, uint8_t mac)
 {
     if (*size >= 0 && *size < MAX_BUFFER_SIZE) {
-        buffer[*size] = (bytestring_t){data, length, mac};
+        buffer[*size] = (bytestring_t){{*data}, length, mac};
         *size += 1;
         return ERROR_OK;
     }
