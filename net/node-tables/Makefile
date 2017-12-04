@@ -1,4 +1,4 @@
-TARGET = test
-SRC    = test.c node-tables.c
+TARGET = test-tables
+SRC    = test-tables.c node-tables.c
 
 -include ../../Makefile.in
