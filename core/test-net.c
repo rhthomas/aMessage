@@ -117,7 +117,6 @@ int main()
     print_array(out_data, 128);
 
 
-
     // test net_buffer_push PASS
     error_t err = 0;
     printf("test buffer push\n");

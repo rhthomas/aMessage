@@ -25,12 +25,6 @@ error_t net_tx(uint8_t *data, uint8_t length, uint8_t mac)
         mac
     );
     return err;
-    // if (net_tx_size == 0) {
-    //     net_tx_buffer = (bytestring_t){{*data}, length, mac};
-    //     net_tx_size++;
-    //     return ERROR_OK;
-    // }
-    // return ERROR_NET_NOBUFS;
 }
 
 // add data to the RX buffer
@@ -45,12 +39,6 @@ error_t net_rx(uint8_t *data, uint8_t length, uint8_t mac)
         mac
     );
     return err;
-    // if (net_rx_size == 0) {
-    //     net_rx_buffer = (bytestring_t){{*data}, length, mac};
-    //     net_rx_size++;
-    //     return ERROR_OK;
-    // }
-    // return ERROR_NET_NOBUFS;
 }
 
 // do stuff with buffers, i.e. if your TX buffer has stuff, pass to DLL.
@@ -246,13 +234,13 @@ uint8_t *net_to_array(net_packet_t *p)
 
 net_packet_t net_to_struct(uint8_t *data, uint8_t length)
 {
-    // #define METHOD
+    #define METHOD
     #ifdef METHOD
     net_packet_t packet;
     for (int i=0; i<length; i++) {
         packet.elem[i] = data[i];
         // skip any unused TRAN data
-        if (i == data[4]-2) {
+        if (i == data[4]-3) {
             // jump to cksum field
             i = 125;
         }

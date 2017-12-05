@@ -164,12 +164,17 @@ extern uint8_t net_rx_size;
 
 /**
     @brief  Returns first element in buffer.
+
+    @TODO   Restructure the buffers.
 */
 error_t net_buffer_push(bytestring_t *buffer, uint8_t *size, uint8_t *data,
     uint8_t length, uint8_t mac);
 
 /**
     @brief  Returns first element in buffer.
+
+    @note   Do not call if size variable == 0.
+    @TODO   Restructure the buffers.
 */
 bytestring_t net_buffer_pop(bytestring_t *buffer, uint8_t *size);
 
