@@ -177,7 +177,7 @@ error_t net_rx_handler(void)
                 new_node((node_t){p.src_addr, START_AGE});
             } else {
                 // node in list, update age
-                known_nodes[index].age = START_AGE;
+                known_nodes[index].node.age = START_AGE;
             }
             // reply if original message was NOT already an ACK
             if (p.ack == 0) {

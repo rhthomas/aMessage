@@ -26,7 +26,7 @@ int main()
     );
     printf("broadcast packet\n"); // PASS
     print_struct(
-        net_bcast_packet(0xAA, &tran_data, sizeof(tran_data))
+        net_bcast_packet(0xAA, tran_data, sizeof(tran_data))
     );
     // TODO Not yet implemented.
     // print_struct(

@@ -53,9 +53,13 @@ net_packet_t net_bcast_packet(uint8_t src, uint8_t *data, uint8_t data_len)
         .src_addr = src,
         .dest_addr = 0x00, // bcast address
         .length = data_len + 7,
-        .tran = {*data}, // ?
+        .tran = {0},
         .cksum = 0x0000
     };
+    // fill tran field
+    for (uint8_t i=0; i<data_len; i++) {
+        p.tran[i] = data[i];
+    }
     p.cksum = xor_sum(&p);
     return p;
 }

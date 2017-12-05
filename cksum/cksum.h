@@ -29,7 +29,7 @@
     @param  length : Length of data.
     @return XOR sum of data.
 */
-uint8_t xor_sum(net_packet_t *p);
+uint16_t xor_sum(net_packet_t *p);
 
 /**
     @brief  Validate checksum.
