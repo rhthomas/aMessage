@@ -18,7 +18,7 @@ error_t net_tx(uint8_t *data, uint8_t length, uint8_t mac)
 {
     error_t err = 0;
     err = net_buffer_push(
-        &net_tx_buffer,
+        net_tx_buffer,
         &net_tx_size,
         data,
         length,
@@ -38,7 +38,7 @@ error_t net_rx(uint8_t *data, uint8_t length, uint8_t mac)
 {
     error_t err = 0;
     err = net_buffer_push(
-        &net_rx_buffer,
+        net_rx_buffer,
         &net_tx_size,
         data,
         length,
@@ -95,7 +95,7 @@ error_t net_tx_handler(void)
     }
 
     // TODO routing in here?
-    bytestring_t bs = net_buffer_pop(&net_tx_buffer, &net_tx_size);
+    bytestring_t bs = net_buffer_pop(net_tx_buffer, &net_tx_size);
     // bytestring_t bs = net_tx_buffer;
     // net_tx_size--;
 
@@ -131,7 +131,7 @@ error_t net_rx_handler(void)
 
     // pop data out of rx buffer
     bytestring_t bs = net_buffer_pop(
-        &net_rx_buffer,
+        net_rx_buffer,
         &net_rx_size
     );
     // bytestring_t bs = net_rx_buffer;
@@ -284,23 +284,26 @@ net_packet_t net_to_struct(uint8_t *data, uint8_t length)
 
 //---------- buffers ----------//
 
-// TODO does this work?
 error_t net_buffer_push(bytestring_t *buffer, uint8_t *size, uint8_t *data,
     uint8_t length, uint8_t mac)
 {
     if (*size >= 0 && *size < MAX_BUFFER_SIZE) {
-        buffer[*size] = (bytestring_t){{*data}, length, mac};
+        for (int i=0; i<121; i++) {
+            buffer[*size].data[i] = data[i];
+        }
+        buffer[*size].length = length;
+        buffer[*size].mac = mac;
         *size += 1;
         return ERROR_OK;
     }
     return ERROR_NET_NOBUFS;
 }
 
-bytestring_t out; // global?
+// do not call if *size==0
 bytestring_t net_buffer_pop(bytestring_t *buffer, uint8_t *size)
 {
     // store first-out data in varable
-    out = buffer[0];
+    bytestring_t out = buffer[0];
     // move all packets nearer to exit
     for (int i=0; i<*size-1; i++) {
         buffer[i] = buffer[i + 1];

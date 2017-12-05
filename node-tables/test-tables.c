@@ -26,7 +26,9 @@ int main(void)
     printf("test add too many\n");
     for (int i=0; i<15; i++) {
         printf("list..... ");
-        new_node((node_t){i,(i%3)+1});
+        new_node(
+            (node_t){i,(i%3)+1}
+        );
         print();
     }
     printf("\n");
