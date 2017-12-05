@@ -1,38 +1,38 @@
 #include "node-tables.h"
 
-uint8_t num_nodes;
+uint8_t num_nodes = 0;
 
-void new_node(node_t *list, node_t add, uint8_t *num_items)
+void new_node(node_t add)
 {
-    if (*num_items >= 0 && *num_items < MAX_NODES) {
-        list[*num_items] = add;
-        *num_items += 1;
+    if (num_nodes >= 0 && num_nodes < MAX_NODES) {
+        known_nodes[num_nodes] = add;
+        num_nodes += 1;
     }
 }
 
-void update_node_table(node_t *list, uint8_t *num_items)
+void update_node_table()
 {
     uint8_t i = 0;
     // go through array and -- age
-    while (i < *num_items) {
-        list[i].age--;
-        if (list[i].age == 0) {
+    while (i < num_nodes) {
+        known_nodes[i].age--;
+        if (known_nodes[i].age == 0) {
             // remove node
-            for (uint8_t j=i; j<*num_items-1; j++) {
-                list[j] = list[j+1];
+            for (uint8_t j=i; j<num_nodes-1; j++) {
+                known_nodes[j] = known_nodes[j+1];
             }
-            *num_items -= 1;
+            num_nodes -= 1;
             continue;
         }
         i++;
     }
 }
 
-int8_t search_list(node_t *list, uint8_t search, uint8_t *num_items)
+int8_t search_list(uint8_t search)
 {
-    if (*num_items) {
-        for (uint8_t i=0; i<*num_items; i++) {
-            if (search == list[i].addr) {
+    if (num_nodes) {
+        for (uint8_t i=0; i<num_nodes; i++) {
+            if (search == known_nodes[i].addr) {
                 return i;
             }
         }

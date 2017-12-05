@@ -16,30 +16,41 @@ uint8_t net_rx_size = 0;
 // add data to the TX buffer
 error_t net_tx(uint8_t *data, uint8_t length, uint8_t mac)
 {
-    // error_t err = 0;
-    // err = net_buffer_push(
-    //     &net_tx_buffer,
-    //     &net_tx_size,
-    //     data,
-    //     length,
-    //     mac
-    // );
-    // return err;
-
+    error_t err = 0;
+    err = net_buffer_push(
+        &net_tx_buffer,
+        &net_tx_size,
+        data,
+        length,
+        mac
+    );
+    return err;
+    // if (net_tx_size == 0) {
+    //     net_tx_buffer = (bytestring_t){{*data}, length, mac};
+    //     net_tx_size++;
+    //     return ERROR_OK;
+    // }
+    // return ERROR_NET_NOBUFS;
 }
 
 // add data to the RX buffer
 error_t net_rx(uint8_t *data, uint8_t length, uint8_t mac)
 {
-    // error_t err = 0;
-    // err = net_buffer_push(
-    //     &net_rx_buffer,
-    //     &net_tx_size,
-    //     data,
-    //     length,
-    //     mac
-    // );
-    // return err;
+    error_t err = 0;
+    err = net_buffer_push(
+        &net_rx_buffer,
+        &net_tx_size,
+        data,
+        length,
+        mac
+    );
+    return err;
+    // if (net_rx_size == 0) {
+    //     net_rx_buffer = (bytestring_t){{*data}, length, mac};
+    //     net_rx_size++;
+    //     return ERROR_OK;
+    // }
+    // return ERROR_NET_NOBUFS;
 }
 
 // do stuff with buffers, i.e. if your TX buffer has stuff, pass to DLL.
@@ -49,7 +60,7 @@ void net_tick(void)
 
     // TODO do something with this error?
     err = net_send_lsa(); // do this every 3s or something
-    update_node_table(&known_nodes, &num_nodes);
+    update_node_table();
 
     pres_s = next_s;
     switch (pres_s) {
@@ -85,6 +96,8 @@ error_t net_tx_handler(void)
 
     // TODO routing in here?
     bytestring_t bs = net_buffer_pop(&net_tx_buffer, &net_tx_size);
+    // bytestring_t bs = net_tx_buffer;
+    // net_tx_size--;
 
     // pad TRAN data with net stuff
     net_packet_t p = {
@@ -121,6 +134,9 @@ error_t net_rx_handler(void)
         &net_rx_buffer,
         &net_rx_size
     );
+    // bytestring_t bs = net_rx_buffer;
+    // net_rx_size--;
+
     net_packet_t p = net_to_struct(bs.data, bs.length);
 
     // check checksum
@@ -157,14 +173,10 @@ error_t net_rx_handler(void)
     switch (p.type) {
         case LSA:
             // search for node index, -1 if it does not exist
-            index = search_list(&known_nodes, p.src_addr, &num_nodes);
+            index = search_list(p.src_addr);
             if (index < 0) {
                 // add to list of known nodes
-                new_node(
-                    &known_nodes,
-                    (node_t){p.src_addr, START_AGE},
-                    &num_nodes
-                );
+                new_node((node_t){p.src_addr, START_AGE});
             } else {
                 // node in list, update age
                 known_nodes[index].age = START_AGE;
@@ -272,6 +284,7 @@ net_packet_t net_to_struct(uint8_t *data, uint8_t length)
 
 //---------- buffers ----------//
 
+// TODO does this work?
 error_t net_buffer_push(bytestring_t *buffer, uint8_t *size, uint8_t *data,
     uint8_t length, uint8_t mac)
 {
@@ -283,7 +296,7 @@ error_t net_buffer_push(bytestring_t *buffer, uint8_t *size, uint8_t *data,
     return ERROR_NET_NOBUFS;
 }
 
-bytestring_t out;
+bytestring_t out; // global?
 bytestring_t net_buffer_pop(bytestring_t *buffer, uint8_t *size)
 {
     // store first-out data in varable

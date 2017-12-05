@@ -57,6 +57,9 @@ int main()
             sizeof(inc_data),
             inc_data[3]
         );
+        // err = net_tx(
+        //     &inc_data, 128, 0xAA
+        // );
         if (!err) {
             printf("ok\n");
         } else {

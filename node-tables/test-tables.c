@@ -9,16 +9,14 @@
 
 #include "node-tables.h"
 
-uint8_t num_nodes = 0;
-
-void print(node_t *array, uint8_t *num_items)
+void print(void)
 {
-    if (*num_items == 0) {
+    if (num_nodes == 0) {
         printf("empty\n");
         return;
     }
-    for (uint8_t i=0; i<*num_items; i++) {
-        printf("{0x%02x, %d}, ", array[i].addr, array[i].age);
+    for (uint8_t i=0; i<num_nodes; i++) {
+        printf("{0x%02x, %d}, ", known_nodes[i].addr, known_nodes[i].age);
     }
     printf("\n");
 }
@@ -28,14 +26,14 @@ int main(void)
     printf("test add too many\n");
     for (int i=0; i<15; i++) {
         printf("list..... ");
-        new_node(&known_nodes, (node_t){i,(i%3)+1}, &num_nodes);
-        print(&known_nodes, &num_nodes);
+        new_node((node_t){i,(i%3)+1});
+        print();
     }
     printf("\n");
 
     printf("test searching\n");
     printf("search... ");
-    int8_t index = search_list(&known_nodes, 0x03, &num_nodes);
+    int8_t index = search_list(0x03);
     if (index == -1) {
         printf("not in list\n");
     } else {
@@ -46,14 +44,14 @@ int main(void)
     printf("test updating\n");
     for (int i=0; i<0xF; i++) {
         printf("update... ");
-        update_node_table(&known_nodes, &num_nodes);
-        print(&known_nodes, &num_nodes);
+        update_node_table();
+        print();
     }
     printf("\n");
 
     printf("test missing\n");
     printf("search... ");
-    index = search_list(&known_nodes, 0x03, &num_nodes);
+    index = search_list(0x03);
     if (index == -1) {
         printf("not in list\n");
     } else {
