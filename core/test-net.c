@@ -36,12 +36,12 @@ int main()
     printf("incoming array\n");
     print_array(inc_data, sizeof(inc_data));
 
-    // test net_to_struct PASS
+    // test net_to_struct FAIL - random data after real tran stuff
     printf("converted to struct\n");
     net_packet_t p = net_to_struct(inc_data, sizeof(inc_data));
     print_struct(p);
 
-    // test net_to_array FAIL
+    // test net_to_array FAIL - random data after first byte
     printf("out array\n");
     uint8_t *out_data = net_to_array(&p);
     print_array(out_data, sizeof(net_packet_t));

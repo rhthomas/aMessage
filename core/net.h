@@ -133,6 +133,8 @@ error_t net_send_lsa(void);
 
 /**
     @brief  Convert NET packet to byte array.
+
+    @TODO   Not working properly.
 */
 uint8_t *net_to_array(net_packet_t *p);
 

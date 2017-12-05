@@ -234,15 +234,32 @@ uint8_t *net_to_array(net_packet_t *p)
 
 net_packet_t net_to_struct(uint8_t *data, uint8_t length)
 {
-    net_packet_t packet;
-    for (int i=0; i<length; i++) {
-        packet.elem[i] = data[i];
-        // skip any unused TRAN data
-        if (i == data[4]-2) {
-            // jump to cksum field
-            i = 125;
-        }
-    }
+    // net_packet_t packet;
+    // for (int i=0; i<length; i++) {
+    //     packet.elem[i] = data[i];
+    //     // skip any unused TRAN data
+    //     if (i == data[4]-2) {
+    //         // jump to cksum field
+    //         i = 125;
+    //     }
+    // }
+    net_packet_t packet = {
+        .vers = (data[0] & 0b00000011),
+        .hop  = (data[0] & 0b00011100) >> 2,
+        .type = (data[0] & 0b01100000) >> 5,
+        .ack  = (data[0] & 0b10000000) >> 7,
+        .res  = data[1],
+        .src_addr = data[2],
+        .dest_addr = data[3],
+        .length = data[4],
+        .tran = {0}, // init
+        .cksum = data[127] << 8 // backwards?
+    };
+    // // fill tran field
+    // // p.length is length of whole packet with 7 bytes for NET fields.
+    // for (int i=0; i<packet.length-7; i++) {
+    //     packet.tran[i] = data[4+i];
+    // }
     return packet;
 }
 
