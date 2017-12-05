@@ -16,29 +16,30 @@ uint8_t net_rx_size = 0;
 // add data to the TX buffer
 error_t net_tx(uint8_t *data, uint8_t length, uint8_t mac)
 {
-    error_t err = 0;
-    err = net_buffer_push(
-        &net_tx_buffer,
-        &net_tx_size,
-        data,
-        length,
-        mac
-    );
-    return err;
+    // error_t err = 0;
+    // err = net_buffer_push(
+    //     &net_tx_buffer,
+    //     &net_tx_size,
+    //     data,
+    //     length,
+    //     mac
+    // );
+    // return err;
+
 }
 
 // add data to the RX buffer
 error_t net_rx(uint8_t *data, uint8_t length, uint8_t mac)
 {
-    error_t err = 0;
-    err = net_buffer_push(
-        &net_rx_buffer,
-        &net_rx_size,
-        data,
-        length,
-        mac
-    );
-    return err;
+    // error_t err = 0;
+    // err = net_buffer_push(
+    //     &net_rx_buffer,
+    //     &net_tx_size,
+    //     data,
+    //     length,
+    //     mac
+    // );
+    // return err;
 }
 
 // do stuff with buffers, i.e. if your TX buffer has stuff, pass to DLL.
@@ -218,10 +219,11 @@ error_t net_send_lsa(void)
 
 //---------- utility functions ----------//
 
+uint8_t data[128];
 uint8_t *net_to_array(net_packet_t *p)
 {
-    uint8_t data[128] = {0};
-    for (uint8_t i=0; i<sizeof(data); i++) {
+    // uint8_t data[128]; // <-- needs to be global
+    for (uint8_t i=0; i<128; i++) {
         data[i] = p->elem[i];
         if (i == p->length-2) {
             // skip to end of array
@@ -234,15 +236,18 @@ uint8_t *net_to_array(net_packet_t *p)
 
 net_packet_t net_to_struct(uint8_t *data, uint8_t length)
 {
-    // net_packet_t packet;
-    // for (int i=0; i<length; i++) {
-    //     packet.elem[i] = data[i];
-    //     // skip any unused TRAN data
-    //     if (i == data[4]-2) {
-    //         // jump to cksum field
-    //         i = 125;
-    //     }
-    // }
+    // #define METHOD
+    #ifdef METHOD
+    net_packet_t packet;
+    for (int i=0; i<length; i++) {
+        packet.elem[i] = data[i];
+        // skip any unused TRAN data
+        if (i == data[4]-2) {
+            // jump to cksum field
+            i = 125;
+        }
+    }
+    #else
     net_packet_t packet = {
         .vers = (data[0] & 0b00000011),
         .hop  = (data[0] & 0b00011100) >> 2,
@@ -253,13 +258,15 @@ net_packet_t net_to_struct(uint8_t *data, uint8_t length)
         .dest_addr = data[3],
         .length = data[4],
         .tran = {0}, // init
-        .cksum = data[127] << 8 // backwards?
+        // .cksum = data[127] << 8 // backwards?
+        .cksum = *(uint16_t *)&data[126]
     };
-    // // fill tran field
-    // // p.length is length of whole packet with 7 bytes for NET fields.
-    // for (int i=0; i<packet.length-7; i++) {
-    //     packet.tran[i] = data[4+i];
-    // }
+    // fill tran field
+    // p.length is length of whole packet with 7 bytes for NET fields.
+    for (int i=0; i<packet.length-7; i++) {
+        packet.tran[i] = data[5+i];
+    }
+    #endif // METHOD
     return packet;
 }
 
@@ -276,10 +283,11 @@ error_t net_buffer_push(bytestring_t *buffer, uint8_t *size, uint8_t *data,
     return ERROR_NET_NOBUFS;
 }
 
+bytestring_t out;
 bytestring_t net_buffer_pop(bytestring_t *buffer, uint8_t *size)
 {
     // store first-out data in varable
-    bytestring_t out = buffer[0];
+    out = buffer[0];
     // move all packets nearer to exit
     for (int i=0; i<*size-1; i++) {
         buffer[i] = buffer[i + 1];

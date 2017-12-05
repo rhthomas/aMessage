@@ -36,15 +36,15 @@ int main()
     printf("incoming array\n");
     print_array(inc_data, sizeof(inc_data));
 
-    // test net_to_struct FAIL - random data after real tran stuff
+    // test net_to_struct
     printf("converted to struct\n");
     net_packet_t p = net_to_struct(inc_data, sizeof(inc_data));
     print_struct(p);
 
-    // test net_to_array FAIL - random data after first byte
+    // test net_to_array
     printf("out array\n");
     uint8_t *out_data = net_to_array(&p);
-    print_array(out_data, sizeof(net_packet_t));
+    print_array(out_data, 128);
 
     // test net_buffer_push PASS
     error_t err = 0;
@@ -67,8 +67,11 @@ int main()
 
     // test net_buffer_pop FAIL
     printf("test buffer pop\n");
-    bytestring_t bs = net_buffer_pop(&net_tx_buffer, &net_tx_size);
-    print_array(bs.data, bs.length);
+    for (int i=0; i<3; i++) {
+        bytestring_t bs = net_buffer_pop(&net_tx_buffer, &net_tx_size);
+        print_array(bs.data, bs.length);
+    }
+    printf("\n");
 
     return 0;
 }

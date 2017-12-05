@@ -152,7 +152,7 @@ typedef struct {
     uint8_t mac;       ///< MAC address.
 } bytestring_t;
 
-#define MAX_BUFFER_SIZE 2
+#define MAX_BUFFER_SIZE 2 ///< Don't really need two buffers at NET layer.
 
 bytestring_t net_tx_buffer[MAX_BUFFER_SIZE];
 extern uint8_t net_tx_size;
