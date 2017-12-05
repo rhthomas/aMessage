@@ -21,8 +21,12 @@ typedef struct {
     uint16_t age;
 } node_t;
 
-node_t known_nodes[MAX_NODES];
-extern uint8_t num_nodes; // keeps track of static array size
+typedef struct {
+    uint8_t occupied; ///< Is this memory address occupied?
+    node_t  node;
+} node_list_t;
+
+node_list_t known_nodes[MAX_NODES];
 
 /**
     @brief  Add new nodes to the list of known nodes.

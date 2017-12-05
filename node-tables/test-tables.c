@@ -11,12 +11,13 @@
 
 void print(void)
 {
-    if (num_nodes == 0) {
-        printf("empty\n");
-        return;
-    }
-    for (uint8_t i=0; i<num_nodes; i++) {
-        printf("{0x%02x, %d}, ", known_nodes[i].addr, known_nodes[i].age);
+    for (uint8_t i=0; i<MAX_NODES; i++) {
+        if (known_nodes[i].occupied) {
+            printf("{0x%02x, %d}, ",
+                known_nodes[i].node.addr, known_nodes[i].node.age);
+        } else {
+            printf("{____, _}, ");
+        }
     }
     printf("\n");
 }
@@ -25,7 +26,7 @@ int main(void)
 {
     printf("test add too many\n");
     for (int i=0; i<15; i++) {
-        printf("list..... ");
+        printf("[ list ]\t");
         new_node(
             (node_t){i,(i%3)+1}
         );
@@ -34,7 +35,7 @@ int main(void)
     printf("\n");
 
     printf("test searching\n");
-    printf("search... ");
+    printf("[search]\t");
     int8_t index = search_list(0x03);
     if (index == -1) {
         printf("not in list\n");
@@ -45,14 +46,14 @@ int main(void)
 
     printf("test updating\n");
     for (int i=0; i<0xF; i++) {
-        printf("update... ");
+        printf("[update]\t");
         update_node_table();
         print();
     }
     printf("\n");
 
     printf("test missing\n");
-    printf("search... ");
+    printf("[search]\t");
     index = search_list(0x03);
     if (index == -1) {
         printf("not in list\n");

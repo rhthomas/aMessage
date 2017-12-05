@@ -94,10 +94,8 @@ error_t net_tx_handler(void)
         return ERROR_OK;
     }
 
-    // TODO routing in here?
+    // TODO routing in here when LSA is working
     bytestring_t bs = net_buffer_pop(net_tx_buffer, &net_tx_size);
-    // bytestring_t bs = net_tx_buffer;
-    // net_tx_size--;
 
     // pad TRAN data with net stuff
     net_packet_t p = {
