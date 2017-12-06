@@ -9,8 +9,9 @@
 
 // incomming data from dll.
 uint8_t inc_data[] = {
+    // control[2], src[1], dest[1], length[1]
     0x1c, 0x00, 0xaa, 0xab, 0x0f,
-    // TRAN data
+    // TRAN data[121]
     0x00, 0x11, 0x22,
     0x33, 0x44, 0x55, 0x66, 0x77, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -27,7 +28,7 @@ uint8_t inc_data[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    // checksum
+    // checksum[2]
     0x00, 0x12
 };
 
@@ -39,17 +40,38 @@ int main()
     printf("incoming array\n");
     print_array(inc_data, sizeof(inc_data));
 
-    // test net_to_struct PASS
+    /*--------------------------------------------------------------------------
+    TEST: net_to_struct
+
+    Convert the inc_data[] array to a structure and print the contents.
+
+    PASS: Y
+    --------------------------------------------------------------------------*/
     printf("converted to struct\n");
     net_packet_t p = net_to_struct(inc_data, sizeof(inc_data));
     print_struct(p);
 
-    // test net_to_array PASS
+    /*--------------------------------------------------------------------------
+    TEST: net_to_array
+
+    Take the preivously converted structure and turn it back into an array,
+    again printing the contents.
+
+    PASS: Y
+    --------------------------------------------------------------------------*/
     printf("out array\n");
     uint8_t *out_data = net_to_array(&p);
     print_array(out_data, 128);
 
-    // test net_buffer_push PASS
+    /*--------------------------------------------------------------------------
+    TEST: net_buffer_push
+
+    Attempt to push 3 elements to the net_tx_buffer which is two elements wide.
+    Two should succeed with the buffer contents printed, one should fail with
+    error = 3, ERROR_NET_NOBUFS.
+
+    PASS: Y
+    --------------------------------------------------------------------------*/
     error_t err = 0;
     printf("test buffer push\n");
     // push to the buffer a few times
@@ -69,7 +91,15 @@ int main()
     }
     printf("\n");
 
-    // test net_buffer_peak
+    /*--------------------------------------------------------------------------
+    TEST: net_buffer_peak
+
+    Attempt to peak at the net_tx_buffer 3 times. Should return the same data
+    every time since peak shows the oldest buffer data (FIFO). Would only return
+    an error if the buffer was empty. This condition is not tested here.
+
+    PASS: Y
+    --------------------------------------------------------------------------*/
     printf("test buffer peak\n");
     // bytestring_t bs;
     for (int i=0; i<3; i++) {
@@ -83,9 +113,16 @@ int main()
     }
     printf("\n");
 
-    // test net_buffer_pop PASS
+    /*--------------------------------------------------------------------------
+    TEST: net_buffer_pop
+
+    Try to pop data from the buffer 8 times. This should succeed for 2 attempts
+    since there are two elements in the buffer, and fail for the other 6 returning
+    ERROR_NET_NOBUFS.
+
+    PASS: Y
+    --------------------------------------------------------------------------*/
     printf("test buffer pop\n");
-    // bytestring_t bs;
     for (int i=0; i<8; i++) {
         err = net_buffer_pop(&net_tx_buffer, &bs);
         if (!err) {

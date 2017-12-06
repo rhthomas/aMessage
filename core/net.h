@@ -84,7 +84,7 @@ error_t net_rx(uint8_t *data, uint8_t length, uint8_t mac);
 
     Called by main clock tick interrupt.
 
-    @see Physical [PHY] layer.
+    @see    Physical [PHY] layer.
 */
 void net_tick(void);
 
