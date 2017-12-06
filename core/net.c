@@ -11,22 +11,30 @@
 error_t net_tx(uint8_t *data, uint8_t length, uint8_t mac)
 {
     error_t err = 0;
-    err = net_buffer_push(
-        &net_tx_buffer,
-        // TODO this is wrong, this is pointing to the first item in the array
-        (bytestring_t){{*data}, length, mac}
-    );
+    // fill new bytestring
+    bytestring_t bs;
+    bs.length = length;
+    bs.mac = mac;
+    for (int i=0; i<121; i++) {
+        bs.data[i] = data[i];
+    }
+    // push to tx buffer
+    err = net_buffer_push(&net_tx_buffer, bs);
     return err;
 }
 
 error_t net_rx(uint8_t *data, uint8_t length, uint8_t mac)
 {
     error_t err = 0;
-    err = net_buffer_push(
-        &net_rx_buffer,
-        // TODO this is wrong, this is pointing to the first item in the array
-        (bytestring_t){{*data}, length, mac}
-    );
+    // fill new bytestring
+    bytestring_t bs;
+    bs.length = length;
+    bs.mac = mac;
+    for (int i=0; i<121; i++) {
+        bs.data[i] = data[i];
+    }
+    // push to tx buffer
+    err = net_buffer_push(&net_rx_buffer, bs);
     return err;
 }
 
@@ -38,6 +46,7 @@ void net_tick(void)
     err = net_send_lsa(); // do this every 3s or something
     update_node_table();
 
+    // TODO do you need a state machine?
     pres_s = next_s;
     switch (pres_s) {
         case TX:
@@ -73,32 +82,30 @@ error_t net_tx_handler(void)
     }
 
     // TODO routing in here when LSA is working
+
+    // pop data from tx handler
     bytestring_t bs;
-    if ((err = net_buffer_pop(&net_tx_buffer, &bs))) {
+    if ((err = net_buffer_peak(&net_tx_buffer, &bs))) {
         return err;
     }
 
     // pad TRAN data with net stuff
-    net_packet_t p = {
-        .vers = VERSION,
-        .hop  = 0b111,
-        .type = APP,
-        .ack  = 0,
-        .res  = 0x00,
-        .src_addr  = LOCAL_ADDRESS,
-        .dest_addr = bs.mac,
-        .length    = bs.length + 7,
-        .tran      = {*bs.data},
-        .cksum     = 0x0000
-    };
-    p.cksum = xor_sum(&p);
+    net_packet_t p = net_data_packet(
+        LOCAL_ADDRESS, // ?
+        bs.mac,
+        bs.data,
+        bs.length
+    );
 
     // pass down to dll, return error
-    return dll_tx(
-        net_to_array(&p),
-        p.length,
-        p.dest_addr
-    );
+    if ((err = dll_tx(net_to_array(&p), p.length, p.dest_addr))) {
+        // there was an error
+        return err;
+    } else {
+        // everything is fine, pop and drop the packet
+        err = net_buffer_pop(&net_tx_buffer, &bs);
+        return ERROR_OK;
+    }
 }
 
 error_t net_rx_handler(void)
@@ -112,7 +119,7 @@ error_t net_rx_handler(void)
 
     // pop data out of rx buffer
     bytestring_t bs;
-    if ((err = net_buffer_pop(&net_rx_buffer, &bs))) {
+    if ((err = net_buffer_peak(&net_rx_buffer, &bs))) {
         return err;
     }
 
@@ -134,15 +141,17 @@ error_t net_rx_handler(void)
                 if (--p.hop == 0) return ERROR_NET_DROP;
                 // send packet back down to DLL to transmit.
                 err = dll_tx(
-                    net_to_array((net_packet_t *)&p),
+                    net_to_array(&p),
                     p.length,
                     p.src_addr
                 );
                 return err;
             case 2: // link state routing
-                // TODO Not yet implemented.
-                // add to table and continue flooding
+                // TODO Link state routing.
+                // add to table and continue flooding LSPs
             default:
+                // not needed, pop before return
+                err = net_buffer_pop(&net_rx_buffer, &bs);
                 return ERROR_OK;
         }
     }
@@ -177,6 +186,8 @@ error_t net_rx_handler(void)
                 return err;
             }
             // if it was already an ACK, just add node and return
+            // data not needed, pop before return
+            err = net_buffer_pop(&net_rx_buffer, &bs);
             return ERROR_OK;
         case APP:
             // pass up to TRAN layer.
@@ -185,16 +196,19 @@ error_t net_rx_handler(void)
                 p.length - 7, // 7 bytes of NET stuff
                 p.src_addr
             );
+            // not needed, pop before return
+            err = net_buffer_pop(&net_rx_buffer, &bs);
             return err;
-            break;
         case LSP:
-            // TODO Not yet implemented.
+            // TODO Link state packets.
             break;
         default:
             break;
     }
 
     // probably shouldn't get here
+    // not needed, pop before return
+    err = net_buffer_pop(&net_rx_buffer, &bs);
     return ERROR_OK;
 }
 
@@ -291,7 +305,7 @@ error_t net_buffer_pop(net_buffer_t *buf, bytestring_t *out_bs)
     }
     // buffer not empty, send data to out_bs
     uint8_t next = buf->tail + 1;
-    if (next >= MAX_BUFFER_SIZE) {
+    if (next > MAX_BUFFER_SIZE) {
         next = 0;
     }
     *out_bs = buf->buffer[buf->tail];

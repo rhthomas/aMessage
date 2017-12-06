@@ -57,4 +57,16 @@ net_packet_t net_lsa_packet(uint8_t src);
 */
 net_packet_t net_bcast_packet(uint8_t src, uint8_t *data, uint8_t data_len);
 
+/**
+    @brief  Pad TRAN data to form a NET data packet.
+
+    @param  src : Address of sender.
+    @param  dest : Intended recipient.
+    @param  data : Byte array of TRAN data to pad.
+    @param  data_len : Lenght of TRAN data.
+    @return A net_packet_t object.
+*/
+net_packet_t net_data_packet(uint8_t src, uint8_t dest, uint8_t *data,
+    uint8_t data_len);
+
 #endif // NET_PACKETS_H

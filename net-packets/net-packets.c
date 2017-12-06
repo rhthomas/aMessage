@@ -10,8 +10,8 @@ net_packet_t net_ack_packet(uint8_t src, uint8_t dest)
         .res  = 0x00,
         .src_addr = src,
         .dest_addr = dest,
-        .length = 15, // ?
-        .tran = {0}, // min 8?
+        .length = 15,
+        .tran = {0}, // min 8
         .cksum = 0x0000
     };
     p.cksum = xor_sum(&p);
@@ -28,8 +28,8 @@ net_packet_t net_lsa_packet(uint8_t src)
         .res  = 0x00,
         .src_addr = src,
         .dest_addr = 0x00, // bcast
-        .length = 15, // ?
-        .tran = {0}, // min 8? I dont want this field.
+        .length = 15,
+        .tran = {0}, // min 8
         .cksum = 0x0000
     };
     p.cksum = xor_sum(&p);
@@ -55,6 +55,29 @@ net_packet_t net_bcast_packet(uint8_t src, uint8_t *data, uint8_t data_len)
         .length = data_len + 7,
         .tran = {0},
         .cksum = 0x0000
+    };
+    // fill tran field
+    for (uint8_t i=0; i<data_len; i++) {
+        p.tran[i] = data[i];
+    }
+    p.cksum = xor_sum(&p);
+    return p;
+}
+
+net_packet_t net_data_packet(uint8_t src, uint8_t dest, uint8_t *data,
+    uint8_t data_len)
+{
+    net_packet_t p = {
+        .vers = VERSION,
+        .hop  = 0b111,
+        .type = APP,
+        .ack  = 0,
+        .res  = 0x00,
+        .src_addr  = src,
+        .dest_addr = dest,
+        .length    = data_len + 7,
+        .tran      = {0},
+        .cksum     = 0x0000
     };
     // fill tran field
     for (uint8_t i=0; i<data_len; i++) {

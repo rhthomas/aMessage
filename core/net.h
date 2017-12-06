@@ -150,12 +150,6 @@ typedef struct {
 
 #define MAX_BUFFER_SIZE 2 ///< Don't really need two buffers at NET layer.
 
-// bytestring_t net_tx_buffer[MAX_BUFFER_SIZE];
-// extern uint8_t net_tx_size;
-//
-// bytestring_t net_rx_buffer[MAX_BUFFER_SIZE];
-// extern uint8_t net_rx_size;
-
 typedef struct {
     bytestring_t buffer[MAX_BUFFER_SIZE];
     uint8_t head;
@@ -168,14 +162,11 @@ net_buffer_t net_rx_buffer;
 /**
     @brief  Returns first element in buffer.
 */
-// error_t net_buffer_push(bytestring_t *buffer, uint8_t *size, uint8_t *data,
-//     uint8_t length, uint8_t mac);
 error_t net_buffer_push(net_buffer_t *buf, bytestring_t bs);
 
 /**
     @brief  Returns first element in buffer.
 */
-// bytestring_t net_buffer_pop(bytestring_t *buffer, uint8_t *size);
 error_t net_buffer_pop(net_buffer_t *buf, bytestring_t *out_bs);
 
 /**

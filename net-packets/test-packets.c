@@ -32,6 +32,15 @@ int main()
     // print_struct(
     //     net_lsp_packet(1, 0xAA, 0xAB, /* table */);
     // );
+    printf("tran data packet\n"); // PASS
+    print_struct(
+        net_data_packet(
+            0xAA,
+            0xAB,
+            tran_data,
+            sizeof(tran_data)
+        )
+    );
 
     return 0;
 }
