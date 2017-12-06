@@ -53,7 +53,7 @@ int main()
     PASS: N
     --------------------------------------------------------------------------*/
     error_t err = 0;
-    if (!(err == valid_cksum(&p))) {
+    if (!(err = valid_cksum(&p))) {
         printf("ok\n");
     } else {
         printf("error\n");
