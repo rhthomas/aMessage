@@ -42,7 +42,7 @@ net_packet_t net_lsa_packet(uint8_t src);
     @param  dest : Address of intended receiver.
     @param  table : Link state table of source node.
     @return A NET packet.
-    @TODO   Not yet implemented.
+    @TODO   LSR not yet implemented.
 */
 // net_packet_t net_lsp_packet(uint8_t src, uint8_t dest,
 //     ls_table_t *table);

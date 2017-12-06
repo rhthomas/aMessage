@@ -10,7 +10,6 @@
 
 error_t net_tx(uint8_t *data, uint8_t length, uint8_t mac)
 {
-    error_t err = 0;
     // fill new bytestring
     bytestring_t bs;
     bs.length = length;
@@ -19,13 +18,11 @@ error_t net_tx(uint8_t *data, uint8_t length, uint8_t mac)
         bs.data[i] = data[i];
     }
     // push to tx buffer
-    err = net_buffer_push(&net_tx_buffer, bs);
-    return err;
+    return net_buffer_push(&net_tx_buffer, bs);
 }
 
 error_t net_rx(uint8_t *data, uint8_t length, uint8_t mac)
 {
-    error_t err = 0;
     // fill new bytestring
     bytestring_t bs;
     bs.length = length;
@@ -34,40 +31,41 @@ error_t net_rx(uint8_t *data, uint8_t length, uint8_t mac)
         bs.data[i] = data[i];
     }
     // push to tx buffer
-    err = net_buffer_push(&net_rx_buffer, bs);
-    return err;
+    return net_buffer_push(&net_rx_buffer, bs);
 }
 
 void net_tick(void)
 {
-    error_t err = 0; // error monitor
-
-    // TODO do something with this error?
-    err = net_send_lsa(); // do this every 3s or something
+    net_send_lsa(); // do this every 3s or something
+                    // TODO what if DLL no bufs? just ignore?
     update_node_table();
 
     // TODO do you need a state machine?
-    pres_s = next_s;
-    switch (pres_s) {
-        case TX:
-            err = net_tx_handler();
-            if (err) {
-                next_s = pres_s;
-                break;
-            }
-            next_s = RX;
-            break;
-        case RX:
-            err = net_rx_handler();
-            if (err) {
-                next_s = pres_s;
-                break;
-            }
-            next_s = TX;
-            break;
-        default:
-            break;
-    }
+    // pres_s = next_s;
+    // switch (pres_s) {
+    //     case TX:
+    //         err = net_tx_handler();
+    //         if (err) {
+    //             next_s = pres_s;
+    //             break;
+    //         }
+    //         next_s = RX;
+    //         break;
+    //     case RX:
+    //         err = net_rx_handler();
+    //         if (err) {
+    //             next_s = pres_s;
+    //             break;
+    //         }
+    //         next_s = TX;
+    //         break;
+    //     default:
+    //         break;
+    // }
+
+    // TODO so you don't need to do anything with errors outside.
+    net_tx_handler();
+    net_rx_handler();
 }
 
 //---------- internal functions ----------//
@@ -81,17 +79,22 @@ error_t net_tx_handler(void)
         return ERROR_OK;
     }
 
-    // TODO routing in here when LSA is working
-
     // pop data from tx handler
     bytestring_t bs;
     if ((err = net_buffer_peak(&net_tx_buffer, &bs))) {
         return err;
     }
 
+    // TODO routing in here when LSA is working
+
+    // check node exists. if not, return
+    if (search_list(bs.mac) == -1) {
+        return ERROR_NODE_UNKNOWN;
+    }
+
     // pad TRAN data with net stuff
     net_packet_t p = net_data_packet(
-        LOCAL_ADDRESS, // ?
+        LOCAL_ADDRESS, // TODO what is the global for this?
         bs.mac,
         bs.data,
         bs.length
@@ -196,6 +199,7 @@ error_t net_rx_handler(void)
                 p.length - 7, // 7 bytes of NET stuff
                 p.src_addr
             );
+            // TODO act on error
             // not needed, pop before return
             err = net_buffer_pop(&net_rx_buffer, &bs);
             return err;

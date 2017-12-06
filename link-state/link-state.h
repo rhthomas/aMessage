@@ -14,42 +14,34 @@
 #ifndef LINK_STATE_H
 #define LINK_STATE_H
 
-#define MAX_TABLE_SIZE 7 ///< Maximum number of nodes in a table.
-static uint32_t seq; ///< Global sequence number, increments for each LSP.
-
 #include "net.h"
 
-// TODO static array for link-state table. No malloc.
+#define MAX_TABLE_SIZE 7 ///< Maximum number of nodes in a table.
+#define UNDEF_LEN 0xFF   ///< Large number for undefined hop count.
+extern uint32_t seq;     ///< Global sequence number, increments for each LSP.
 
-// Link-state element.
 typedef struct {
-
+    uint8_t addr; ///< Destination node.
+    uint8_t hops; ///< Number of hops to addr
 } ls_elem_t;
 
-/// Link-state packet.
 typedef struct {
-    uint8_t src_addr;
-    uint32_t seq;
-    uint16_t age;
-    ls_elem_t table[MAX_TABLE_SIZE];
-} lsp_t;
+    uint8_t   src; ///< Local node.
+    uint32_t  seq; ///< Packet sequence number.
+    uint16_t  age; ///< Packet age.
+    ls_elem_t connected[MAX_TABLE_SIZE]; ///< List of connected nodes.
+} ls_packet_t;
 
-/// Table of tables, with
-ls_elem_t table[MAX_TABLE_SIZE][MAX_TABLE_SIZE]; /*
-something like this?
-= {
-    0xAA, {
-        {0xAB, 1},
-        {0xAC, 1},
-        {0xBA, 2}
-    },
-    0xAB, {
-        {0xAB, 1},
-        {0xAC, 1},
-        {0xBA, 2}
-    },
-}
-*/
+typedef struct {
+    uint8_t     occupied; ///< Slot in list is occupied.
+    ls_packet_t lsp;      ///< Packet in slot.
+} ls_list_t;
+
+ls_list_t ls_list[MAX_TABLE_SIZE];
+
+void add_ls_table(ls_packet_t lsp);
+
+void update_ls_table(void);
 
 /**
     @brief  Calculate shortest route from src to dest.

@@ -26,3 +26,6 @@ $(TARGET).out: $(OBJ)
 clean:
 	@echo "Cleaning..."
 	-rm $(OBJ) $(TARGET).out Makefile.deps
+
+help:
+	@echo $(SRC)

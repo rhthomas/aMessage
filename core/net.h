@@ -183,14 +183,14 @@ uint8_t net_buffer_size(net_buffer_t *buf);
 
 //---------- states ----------//
 
-/// State machine states.
-typedef enum {
-    TX,
-    RX,
-} state_t;
-
-// memory for present/next states
-state_t pres_s, next_s;
+// /// State machine states.
+// typedef enum {
+//     TX,
+//     RX,
+// } state_t;
+// 
+// // memory for present/next states
+// state_t pres_s, next_s;
 
 //---------- temp functions ----------//
 
