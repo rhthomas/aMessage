@@ -6,8 +6,6 @@
 
     @brief  NET layer function prototypes.
 
-    @TODO   Discard data outside of length field, except checksum.
-
 */
 
 #ifndef NET_H
@@ -133,8 +131,6 @@ error_t net_send_lsa(void);
 
 /**
     @brief  Convert NET packet to byte array.
-
-    @TODO   Not working properly.
 */
 uint8_t *net_to_array(net_packet_t *p);
 
@@ -154,29 +150,45 @@ typedef struct {
 
 #define MAX_BUFFER_SIZE 2 ///< Don't really need two buffers at NET layer.
 
-bytestring_t net_tx_buffer[MAX_BUFFER_SIZE];
-extern uint8_t net_tx_size;
+// bytestring_t net_tx_buffer[MAX_BUFFER_SIZE];
+// extern uint8_t net_tx_size;
+//
+// bytestring_t net_rx_buffer[MAX_BUFFER_SIZE];
+// extern uint8_t net_rx_size;
 
-bytestring_t net_rx_buffer[MAX_BUFFER_SIZE];
-extern uint8_t net_rx_size;
+typedef struct {
+    bytestring_t buffer[MAX_BUFFER_SIZE];
+    uint8_t head;
+    uint8_t tail;
+} net_buffer_t;
 
-// extern bytestring_t net_buffer_out;
+net_buffer_t net_tx_buffer;
+net_buffer_t net_rx_buffer;
 
 /**
     @brief  Returns first element in buffer.
-
-    @TODO   Restructure the buffers.
 */
-error_t net_buffer_push(bytestring_t *buffer, uint8_t *size, uint8_t *data,
-    uint8_t length, uint8_t mac);
+// error_t net_buffer_push(bytestring_t *buffer, uint8_t *size, uint8_t *data,
+//     uint8_t length, uint8_t mac);
+error_t net_buffer_push(net_buffer_t *buf, bytestring_t bs);
 
 /**
     @brief  Returns first element in buffer.
-
-    @note   Do not call if size variable == 0.
-    @TODO   Restructure the buffers.
 */
-bytestring_t net_buffer_pop(bytestring_t *buffer, uint8_t *size);
+// bytestring_t net_buffer_pop(bytestring_t *buffer, uint8_t *size);
+error_t net_buffer_pop(net_buffer_t *buf, bytestring_t *out_bs);
+
+/**
+    @brief  Return oldest data without incrementing the tail.
+*/
+error_t net_buffer_peak(net_buffer_t *buf, bytestring_t *out_bs);
+
+/**
+    @brief  Get the size of the buffer.
+
+    @return Size of buffer.
+*/
+uint8_t net_buffer_size(net_buffer_t *buf);
 
 //---------- states ----------//
 

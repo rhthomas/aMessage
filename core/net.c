@@ -6,42 +6,30 @@
 
 #include "net.h"
 
-//---------- global variables ----------//
-
-uint8_t net_tx_size = 0;
-uint8_t net_rx_size = 0;
-
 //---------- public methods ----------//
 
-// add data to the TX buffer
 error_t net_tx(uint8_t *data, uint8_t length, uint8_t mac)
 {
     error_t err = 0;
     err = net_buffer_push(
-        net_tx_buffer,
-        &net_tx_size,
-        data,
-        length,
-        mac
+        &net_tx_buffer,
+        // TODO this is wrong, this is pointing to the first item in the array
+        (bytestring_t){{*data}, length, mac}
     );
     return err;
 }
 
-// add data to the RX buffer
 error_t net_rx(uint8_t *data, uint8_t length, uint8_t mac)
 {
     error_t err = 0;
     err = net_buffer_push(
-        net_rx_buffer,
-        &net_tx_size,
-        data,
-        length,
-        mac
+        &net_rx_buffer,
+        // TODO this is wrong, this is pointing to the first item in the array
+        (bytestring_t){{*data}, length, mac}
     );
     return err;
 }
 
-// do stuff with buffers, i.e. if your TX buffer has stuff, pass to DLL.
 void net_tick(void)
 {
     error_t err = 0; // error monitor
@@ -77,13 +65,18 @@ void net_tick(void)
 
 error_t net_tx_handler(void)
 {
+    error_t err = 0;
+
     // return if the buffer is empty
-    if (net_tx_size == 0) {
+    if (!net_buffer_size(&net_tx_buffer)) {
         return ERROR_OK;
     }
 
     // TODO routing in here when LSA is working
-    bytestring_t bs = net_buffer_pop(net_tx_buffer, &net_tx_size);
+    bytestring_t bs;
+    if ((err = net_buffer_pop(&net_tx_buffer, &bs))) {
+        return err;
+    }
 
     // pad TRAN data with net stuff
     net_packet_t p = {
@@ -110,23 +103,23 @@ error_t net_tx_handler(void)
 
 error_t net_rx_handler(void)
 {
+    error_t err = 0;
+
     // return if the buffer is empty
-    if (net_rx_size == 0) {
+    if (!net_buffer_size(&net_rx_buffer)) {
         return ERROR_OK;
     }
 
     // pop data out of rx buffer
-    bytestring_t bs = net_buffer_pop(
-        net_rx_buffer,
-        &net_rx_size
-    );
-    // bytestring_t bs = net_rx_buffer;
-    // net_rx_size--;
+    bytestring_t bs;
+    if ((err = net_buffer_pop(&net_rx_buffer, &bs))) {
+        return err;
+    }
 
+    // convert to packet
     net_packet_t p = net_to_struct(bs.data, bs.length);
 
     // check checksum
-    error_t err = 0;
     if ((err = valid_cksum(&p))) {
         return err;
     }
@@ -270,34 +263,56 @@ net_packet_t net_to_struct(uint8_t *data, uint8_t length)
 
 //---------- buffers ----------//
 
-error_t net_buffer_push(bytestring_t *buffer, uint8_t *size, uint8_t *data,
-    uint8_t length, uint8_t mac)
+error_t net_buffer_push(net_buffer_t *buf, bytestring_t bs)
 {
-    if (*size >= 0 && *size < MAX_BUFFER_SIZE) {
-        for (int i=0; i<121; i++) {
-            buffer[*size].data[i] = data[i];
+    uint8_t next = buf->head + 1;
+    if (next > MAX_BUFFER_SIZE) {
+        next = 0;
+    }
+    // check buffer is not full
+    if (next != buf->tail) {
+        for (uint8_t i=0; i<121; i++) {
+            buf->buffer[buf->head].data[i] = bs.data[i];
         }
-        buffer[*size].length = length;
-        buffer[*size].mac = mac;
-        *size += 1;
+        buf->buffer[buf->head].length = bs.length;
+        buf->buffer[buf->head].mac = bs.mac;
+        // increment
+        buf->head = next;
         return ERROR_OK;
     }
     return ERROR_NET_NOBUFS;
 }
 
-// do not call if *size==0
-bytestring_t net_buffer_pop(bytestring_t *buffer, uint8_t *size)
+error_t net_buffer_pop(net_buffer_t *buf, bytestring_t *out_bs)
 {
-    // store first-out data in varable
-    bytestring_t out = buffer[0];
-    // move all packets nearer to exit
-    for (int i=0; i<*size-1; i++) {
-        buffer[i] = buffer[i + 1];
+    // return if the buffer is empty
+    if (buf->head == buf->tail) {
+        return ERROR_NET_NOBUFS;
     }
-    // decrement size
-    *size -= 1;
-    // return old data
-    return out;
+    // buffer not empty, send data to out_bs
+    uint8_t next = buf->tail + 1;
+    if (next >= MAX_BUFFER_SIZE) {
+        next = 0;
+    }
+    *out_bs = buf->buffer[buf->tail];
+    buf->tail = next;
+    return ERROR_OK;
+}
+
+error_t net_buffer_peak(net_buffer_t *buf, bytestring_t *out_bs)
+{
+    // return if the buffer is empty
+    if (buf->head == buf->tail) {
+        return ERROR_NET_NOBUFS;
+    }
+    // buffer not empty, send data to out_bs
+    *out_bs = buf->buffer[buf->tail];
+    return ERROR_OK;
+}
+
+uint8_t net_buffer_size(net_buffer_t *buf)
+{
+    return (buf->head - buf->tail);
 }
 
 //---------- temp functions ----------//
