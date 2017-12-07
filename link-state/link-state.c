@@ -8,6 +8,25 @@
 
 uint32_t seq = 0;
 
+net_packet_t net_lsp_packet(uint8_t src, uint8_t dest, ls_list_t *table)
+{
+    net_packet_t p = {
+        .vers = VERSION,
+        .hop  = 0b111,
+        .type = LSP,
+        .ack  = 0,
+        .res  = 0x00,
+        .src_addr = src,
+        .dest_addr = dest, // bcast
+        .length = siz,
+        .tran = {0}, // min 8
+        .cksum = 0x0000
+    };
+    // fill TRAN field
+    p.cksum = xor_sum(&p);
+    return p;
+}
+
 void add_ls_table(ls_packet_t lsp)
 {
     for (uint8_t i=0; i<MAX_TABLE_SIZE; i++) {

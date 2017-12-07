@@ -5,6 +5,12 @@
 */
 
 #include "net.h"
+#include "print.h"
+
+//---------- global variables ----------//
+
+// TODO put them all up here
+bytestring_t pass;
 
 //---------- public methods ----------//
 
@@ -17,6 +23,7 @@ error_t net_tx(uint8_t *data, uint8_t length, uint8_t mac)
     for (int i=0; i<121; i++) {
         bs.data[i] = data[i];
     }
+    print_array(bs.data, bs.length);
     // push to tx buffer
     return net_buffer_push(&net_tx_buffer, bs);
 }
@@ -27,43 +34,19 @@ error_t net_rx(uint8_t *data, uint8_t length, uint8_t mac)
     bytestring_t bs;
     bs.length = length;
     bs.mac = mac;
-    for (int i=0; i<121; i++) {
+    for (int i=0; i<128; i++) {
         bs.data[i] = data[i];
     }
-    // push to tx buffer
+    print_array(bs.data, bs.length);
+    // push to rx buffer
     return net_buffer_push(&net_rx_buffer, bs);
 }
 
 void net_tick(void)
 {
+    // TODO wrap this in modulo divider
     net_send_lsa(); // do this every 3s or something
-                    // TODO what if DLL no bufs? just ignore?
     update_node_table();
-
-    // TODO do you need a state machine?
-    // pres_s = next_s;
-    // switch (pres_s) {
-    //     case TX:
-    //         err = net_tx_handler();
-    //         if (err) {
-    //             next_s = pres_s;
-    //             break;
-    //         }
-    //         next_s = RX;
-    //         break;
-    //     case RX:
-    //         err = net_rx_handler();
-    //         if (err) {
-    //             next_s = pres_s;
-    //             break;
-    //         }
-    //         next_s = TX;
-    //         break;
-    //     default:
-    //         break;
-    // }
-
-    // TODO so you don't need to do anything with errors outside.
     net_tx_handler();
     net_rx_handler();
 }
@@ -76,37 +59,51 @@ error_t net_tx_handler(void)
 
     // return if the buffer is empty
     if (!net_buffer_size(&net_tx_buffer)) {
+        #ifdef DEBUG
+        printf("[ TX ] tx buffer has nothing to pop\n");
+        #endif
         return ERROR_OK;
     }
 
     // pop data from tx handler
-    bytestring_t bs;
-    if ((err = net_buffer_peak(&net_tx_buffer, &bs))) {
+    if ((err = net_buffer_peak(&net_tx_buffer, &pass))) {
         return err;
     }
 
+    printf("array\n");
+    print_array(pass.data, pass.length);
+
     // TODO routing in here when LSA is working
 
+    /* dont do this if debugging (testing the handler). we know this function
+    works from the node-tables testbench. */
+    #ifndef DEBUG
     // check node exists. if not, return
-    if (search_list(bs.mac) == -1) {
+    if (search_list(pass.mac) == -1) {
         return ERROR_NODE_UNKNOWN;
     }
+    #endif // DEBUG
 
     // pad TRAN data with net stuff
     net_packet_t p = net_data_packet(
-        LOCAL_ADDRESS, // TODO what is the global for this?
-        bs.mac,
-        bs.data,
-        bs.length
+        LOCAL_ADDRESS,
+        pass.mac,
+        pass.data,
+        pass.length
     );
+
+    printf("struct\n");
+    print_struct(p);
 
     // pass down to dll, return error
     if ((err = dll_tx(net_to_array(&p), p.length, p.dest_addr))) {
         // there was an error
+        printf("[ TX ] dll_tx error %d\n", err);
         return err;
     } else {
         // everything is fine, pop and drop the packet
-        err = net_buffer_pop(&net_tx_buffer, &bs);
+        err = net_buffer_pop(&net_tx_buffer, &pass);
+        printf("[ TX ] dll_tx no errors\n");
         return ERROR_OK;
     }
 }
@@ -121,13 +118,18 @@ error_t net_rx_handler(void)
     }
 
     // pop data out of rx buffer
-    bytestring_t bs;
-    if ((err = net_buffer_peak(&net_rx_buffer, &bs))) {
+    if ((err = net_buffer_peak(&net_rx_buffer, &pass))) {
         return err;
     }
 
+    printf("array\n");
+    print_array(pass.data, pass.length);
+
     // convert to packet
-    net_packet_t p = net_to_struct(bs.data, bs.length);
+    net_packet_t p = net_to_struct(pass.data, pass.length);
+
+    printf("struct\n");
+    print_struct(p);
 
     // check checksum
     if ((err = valid_cksum(&p))) {
@@ -154,7 +156,7 @@ error_t net_rx_handler(void)
                 // add to table and continue flooding LSPs
             default:
                 // not needed, pop before return
-                err = net_buffer_pop(&net_rx_buffer, &bs);
+                err = net_buffer_pop(&net_rx_buffer, &pass);
                 return ERROR_OK;
         }
     }
@@ -190,7 +192,7 @@ error_t net_rx_handler(void)
             }
             // if it was already an ACK, just add node and return
             // data not needed, pop before return
-            err = net_buffer_pop(&net_rx_buffer, &bs);
+            err = net_buffer_pop(&net_rx_buffer, &pass);
             return ERROR_OK;
         case APP:
             // pass up to TRAN layer.
@@ -199,9 +201,8 @@ error_t net_rx_handler(void)
                 p.length - 7, // 7 bytes of NET stuff
                 p.src_addr
             );
-            // TODO act on error
-            // not needed, pop before return
-            err = net_buffer_pop(&net_rx_buffer, &bs);
+            // TODO pop if error?
+            net_buffer_pop(&net_rx_buffer, &pass);
             return err;
         case LSP:
             // TODO Link state packets.
@@ -211,8 +212,7 @@ error_t net_rx_handler(void)
     }
 
     // probably shouldn't get here
-    // not needed, pop before return
-    err = net_buffer_pop(&net_rx_buffer, &bs);
+    net_buffer_pop(&net_rx_buffer, &pass);
     return ERROR_OK;
 }
 
@@ -228,13 +228,13 @@ error_t net_send_lsa(void)
 
 //---------- utility functions ----------//
 
-uint8_t data[128];
+uint8_t data[128]; // TODO move up to globals
 uint8_t *net_to_array(net_packet_t *p)
 {
     // uint8_t data[128]; // <-- needs to be global
     for (uint8_t i=0; i<128; i++) {
         data[i] = p->elem[i];
-        if (i == p->length-2) {
+        if (i == p->length-3) {
             // skip to end of array
             i = 125;
             // 2 bytes left after i++ for cksum
@@ -253,7 +253,7 @@ net_packet_t net_to_struct(uint8_t *data, uint8_t length)
         // skip any unused TRAN data
         if (i == data[4]-3) {
             // jump to cksum field
-            i = 125;
+            i = length-3; //125;
         }
     }
     #else
@@ -281,15 +281,18 @@ net_packet_t net_to_struct(uint8_t *data, uint8_t length)
 
 //---------- buffers ----------//
 
+// TODO buffers not working after poping out the entire buffer.
+
 error_t net_buffer_push(net_buffer_t *buf, bytestring_t bs)
 {
     uint8_t next = buf->head + 1;
-    if (next > MAX_BUFFER_SIZE) {
+    if (next >= MAX_BUFFER_SIZE) {
         next = 0;
     }
     // check buffer is not full
     if (next != buf->tail) {
-        for (uint8_t i=0; i<121; i++) {
+        // copy bs to buffer location
+        for (uint8_t i=0; i<128; i++) {
             buf->buffer[buf->head].data[i] = bs.data[i];
         }
         buf->buffer[buf->head].length = bs.length;
@@ -309,7 +312,7 @@ error_t net_buffer_pop(net_buffer_t *buf, bytestring_t *out_bs)
     }
     // buffer not empty, send data to out_bs
     uint8_t next = buf->tail + 1;
-    if (next > MAX_BUFFER_SIZE) {
+    if (next >= MAX_BUFFER_SIZE) {
         next = 0;
     }
     *out_bs = buf->buffer[buf->tail];

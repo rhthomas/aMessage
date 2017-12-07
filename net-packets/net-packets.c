@@ -36,12 +36,6 @@ net_packet_t net_lsa_packet(uint8_t src)
     return p;
 }
 
-// net_packet_t net_lsp_packet(uint8_t v, uint8_t src, uint8_t dest,
-//     ls_table_t *table)
-// {
-//
-// }
-
 net_packet_t net_bcast_packet(uint8_t src, uint8_t *data, uint8_t data_len)
 {
     net_packet_t p = {

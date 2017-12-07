@@ -15,6 +15,7 @@
 
 #include "errors.h" // has error_t
 #include "node-tables.h"
+// these are down the bottom for some reason
 // #include "cksum.h"
 // #include "net-packets.h"
 
@@ -22,7 +23,12 @@
 #define NULL (void *)0
 #endif // NULL
 
-#define LOCAL_ADDRESS 0xAA
+#ifdef DEBUG
+    #define LOCAL_ADDRESS 0xAA
+#else
+    #define LOCAL_ADDRESS eeprom_read_byte(MAC_EEPROM_LOC)
+#endif // DEBUG
+
 #define VERSION       0 // change this dependant on what version is running
 
 /// NET packet content type.
@@ -80,7 +86,7 @@ error_t net_tx(uint8_t *data, uint8_t length, uint8_t mac);
 error_t net_rx(uint8_t *data, uint8_t length, uint8_t mac);
 
 /**
-    @brief  Statemachine for NET layer operation.
+    @brief  Function calls for NET layer operation.
 
     Called by main clock tick interrupt.
 
@@ -143,12 +149,12 @@ net_packet_t net_to_struct(uint8_t *data, uint8_t length);
 
 /// Byte string buffer for passing arrays around.
 typedef struct {
-    uint8_t data[121]; ///< Data array.
+    uint8_t data[128]; ///< Data array.
     uint8_t length;    ///< Length of array.
     uint8_t mac;       ///< MAC address.
 } bytestring_t;
 
-#define MAX_BUFFER_SIZE 2 ///< Don't really need two buffers at NET layer.
+#define MAX_BUFFER_SIZE 3
 
 typedef struct {
     bytestring_t buffer[MAX_BUFFER_SIZE];
@@ -188,7 +194,7 @@ uint8_t net_buffer_size(net_buffer_t *buf);
 //     TX,
 //     RX,
 // } state_t;
-// 
+//
 // // memory for present/next states
 // state_t pres_s, next_s;
 

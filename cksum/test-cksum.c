@@ -29,7 +29,6 @@ int main()
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
 
-    // TODO this isnt returning correctly
     net_packet_t p = net_to_struct(inc_data, sizeof(inc_data));
     printf("size: %d\n", p.length);
     print_struct(p);
@@ -39,10 +38,9 @@ int main()
 
     Calculate the XOR checksum of the data in inc_data[] array.
 
-    PASS: N - Checksum output is the wrong way around. 0x1200 rather than 0x0012.
+    PASS: Y
     --------------------------------------------------------------------------*/
     p.cksum  = xor_sum(&p);
-    printf("cksum: 0x%04x\n", p.cksum);
     print_struct(p);
 
     /*--------------------------------------------------------------------------
@@ -50,7 +48,7 @@ int main()
 
     Check the previously validated checksum is correct.
 
-    PASS: N
+    PASS: Y
     --------------------------------------------------------------------------*/
     error_t err = 0;
     if (!(err = valid_cksum(&p))) {

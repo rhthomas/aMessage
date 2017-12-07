@@ -36,18 +36,6 @@ net_packet_t net_ack_packet(uint8_t src, uint8_t dest);
 net_packet_t net_lsa_packet(uint8_t src);
 
 /**
-    @brief  Create LSP packet.
-
-    @param  src : Address of sender.
-    @param  dest : Address of intended receiver.
-    @param  table : Link state table of source node.
-    @return A NET packet.
-    @TODO   LSR not yet implemented.
-*/
-// net_packet_t net_lsp_packet(uint8_t src, uint8_t dest,
-//     ls_table_t *table);
-
-/**
     @brief  Create broadcast NET packet.
 
     @param  src : Address of sender.

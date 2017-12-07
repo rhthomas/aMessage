@@ -16,9 +16,10 @@
 
 #include "net.h"
 
-#define MAX_TABLE_SIZE 7 ///< Maximum number of nodes in a table.
-#define UNDEF_LEN 0xFF   ///< Large number for undefined hop count.
-extern uint32_t seq;     ///< Global sequence number, increments for each LSP.
+#define MAX_TABLE_SIZE 7    ///< Maximum number of nodes in a table.
+#define UNDEF_LEN      0xFF ///< Large number for undefined hop count.
+
+extern uint32_t seq; ///< Global sequence number, increments for each LSP.
 
 typedef struct {
     uint8_t addr; ///< Destination node.
@@ -39,8 +40,30 @@ typedef struct {
 
 ls_list_t ls_list[MAX_TABLE_SIZE];
 
+/**
+    @brief  Create LSP packet.
+
+    @param  src : Address of sender.
+    @param  dest : Address of intended receiver.
+    @param  table : Link state table of source node.
+    @TODO   Check the sequence number in the list.
+    @return A NET packet.
+*/
+net_packet_t net_lsp_packet(uint8_t src, uint8_t dest, ls_list_t *table);
+
+/**
+    @brief  Add LSP to the ls_list.
+
+    @param  lsp : Packet to add to list.
+    @see    ls_list
+*/
 void add_ls_table(ls_packet_t lsp);
 
+/**
+    @brief  Update the link-state table.
+
+    Decrements the age of each node in the list.
+*/
 void update_ls_table(void);
 
 /**
@@ -50,6 +73,7 @@ void update_ls_table(void);
     @param  dest : Destination node.
     @param[out] path : Returned node path from src to dest.
     @see    Tanenbaum 5th ed., figure 5-8, p. 369.
+    @TODO   write shortest path function
 */
 void shortest_path(uint8_t src, uint8_t dest, uint8_t path[]);
 

@@ -7,13 +7,12 @@
 #include "net.h"
 #include "print.h"
 
-// incomming data from dll.
-uint8_t inc_data[] = {
+// NET packet coming from DLL. RX
+uint8_t net_data[128] = {
     // control[2], src[1], dest[1], length[1]
-    0x1c, 0x00, 0xaa, 0xab, 0x0f,
+    0x1c, 0x00, 0xab, 0xaa, 0x0f,
     // TRAN data[121]
-    0x00, 0x11, 0x22,
-    0x33, 0x44, 0x55, 0x66, 0x77, 0x00, 0x00, 0x00,
+    0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -27,18 +26,43 @@ uint8_t inc_data[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00,
     // checksum[2]
     0x00, 0x12
 };
 
+// TRAN packet coming from TRAN. TX
+uint8_t tran_data[121] = {
+    // control[2], src[1], dest[1], length[1]
+    0x11, 0x11, 0x22, 0x33, 0x08,
+    // app[114]
+    0x44, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00,
+    // checksum[2]
+    0x00, 0x5d
+};
+
+// buffer to pass around the place
+bytestring_t bs;
+
 int main()
 {
-    // buffer to pass around the place
-    bytestring_t bs;
-
     printf("incoming array\n");
-    print_array(inc_data, sizeof(inc_data));
+    print_array(net_data, sizeof(net_data));
 
     /*--------------------------------------------------------------------------
     TEST: net_to_struct
@@ -48,7 +72,7 @@ int main()
     PASS: Y
     --------------------------------------------------------------------------*/
     printf("converted to struct\n");
-    net_packet_t p = net_to_struct(inc_data, sizeof(inc_data));
+    net_packet_t p = net_to_struct(net_data, sizeof(net_data));
     print_struct(p);
 
     /*--------------------------------------------------------------------------
@@ -76,10 +100,10 @@ int main()
     printf("test buffer push\n");
     // push to the buffer a few times
     for (int i=0; i<3; i++) {
-        bs.length = sizeof(inc_data);
-        bs.mac = inc_data[3];
-        for (int j=0; j<121; j++) {
-            bs.data[j] = inc_data[j] + i;
+        bs.length = sizeof(tran_data);
+        bs.mac = tran_data[3];
+        for (int j=0; j<128; j++) {
+            bs.data[j] = tran_data[j] + i;
         }
         err = net_buffer_push(&net_tx_buffer, bs);
         if (!err) {
@@ -124,13 +148,65 @@ int main()
     --------------------------------------------------------------------------*/
     printf("test buffer pop\n");
     for (int i=0; i<8; i++) {
-        err = net_buffer_pop(&net_tx_buffer, &bs);
-        if (!err) {
+        // err = net_buffer_pop(&net_tx_buffer, &bs);
+        if (!(err = net_buffer_pop(&net_tx_buffer, &bs))) {
             printf("ok: %d\n", net_buffer_size(&net_tx_buffer));
             print_array(bs.data, bs.length);
         } else {
             printf("error: %d\n", err);
         }
+    }
+    printf("\n");
+
+    /*--------------------------------------------------------------------------
+    TEST: net_tx_handler
+
+    Add data to the tx buffer, then call the tx handler with debugging print
+    functions.
+
+    PASS: N
+    --------------------------------------------------------------------------*/
+    printf("net_tx\n");
+    // push data to tx buffer
+    err = net_tx(tran_data, tran_data[4], 0xAB);
+    if (!err) {
+        printf("[ TX ] net_tx no errors\n");
+    } else {
+        printf("[ TX ] net_tx error %d\n", err);
+    }
+
+    printf("net_tx_handler\n");
+    err = net_tx_handler();
+    if (!err) {
+        printf("[ TX ] net_tx_handler no errors\n");
+    } else {
+        printf("[ TX ] net_tx_handler error %d\n", err);
+    }
+    printf("\n");
+
+    /*--------------------------------------------------------------------------
+    TEST: net_rx_handler
+
+    Add data to the rx buffer, then call the tx handler with debugging print
+    functions.
+
+    PASS: N
+    --------------------------------------------------------------------------*/
+    printf("net_rx\n");
+    // push data to tx buffer
+    err = net_rx(net_data, sizeof(net_data), 0xAB);
+    if (!err) {
+        printf("[ RX ] net_rx no errors\n");
+    } else {
+        printf("[ RX ] net_rx error %d\n", err);
+    }
+
+    printf("net_rx_handler\n");
+    err = net_rx_handler();
+    if (!err) {
+        printf("[ RX ] net_rx_handler no errors\n");
+    } else {
+        printf("[ RX ] net_rx_handler error %d\n", err);
     }
     printf("\n");
 
