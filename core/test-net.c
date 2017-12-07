@@ -74,7 +74,7 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("converted to struct\n");
+    printf("net_to_struct\n");
     net_packet_t p = net_to_struct(net_data, sizeof(net_data));
     print_struct(p);
 
@@ -86,7 +86,7 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("out array\n");
+    printf("net_to_array\n");
     uint8_t *out_data = net_to_array(&p);
     print_array(out_data, 128);
 
@@ -99,7 +99,7 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("test buffer push\n");
+    printf("net_buffer_push\n");
     // push to the buffer a few times
     for (int i=0; i<3; i++) {
         bs.length = sizeof(tran_data);
@@ -126,7 +126,7 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("test buffer peak\n");
+    printf("net_buffer_peak\n");
     // bytestring_t bs;
     for (int i=0; i<3; i++) {
         err = net_buffer_peak(&net_tx_buffer, &bs);
@@ -148,7 +148,7 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("test buffer pop\n");
+    printf("net_buffer_pop\n");
     for (int i=0; i<8; i++) {
         // err = net_buffer_pop(&net_tx_buffer, &bs);
         if (!(err = net_buffer_pop(&net_tx_buffer, &bs))) {
