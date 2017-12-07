@@ -70,7 +70,9 @@ error_t net_tx_handler(void)
         return err;
     }
 
+    #ifdef DEBUG
     printf("array\n");
+    #endif // DEBUG
     print_array(pass.data, pass.length);
 
     // TODO routing in here when LSA is working
@@ -98,12 +100,16 @@ error_t net_tx_handler(void)
     // pass down to dll, return error
     if ((err = dll_tx(net_to_array(&p), p.length, p.dest_addr))) {
         // there was an error
+        #ifndef DEBUG
         printf("[ TX ] dll_tx error %d\n", err);
+        #endif
         return err;
     } else {
         // everything is fine, pop and drop the packet
         err = net_buffer_pop(&net_tx_buffer, &pass);
+        #ifndef DEBUG
         printf("[ TX ] dll_tx no errors\n");
+        #endif
         return ERROR_OK;
     }
 }
@@ -122,13 +128,17 @@ error_t net_rx_handler(void)
         return err;
     }
 
+    #ifndef DEBUG
     printf("array\n");
+    #endif
     print_array(pass.data, pass.length);
 
     // convert to packet
     net_packet_t p = net_to_struct(pass.data, pass.length);
 
+    #ifndef DEBUG
     printf("struct\n");
+    #endif
     print_struct(p);
 
     // check checksum
