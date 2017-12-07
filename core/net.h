@@ -13,9 +13,9 @@
 
 #include <stdint.h>
 
-#include "errors.h" // has error_t
+#include "errors.h"
 #include "node-tables.h"
-// these are down the bottom for some reason
+// these are down the bottom to stop linker errors
 // #include "cksum.h"
 // #include "net-packets.h"
 
@@ -29,7 +29,7 @@
     #define LOCAL_ADDRESS eeprom_read_byte(MAC_EEPROM_LOC)
 #endif // DEBUG
 
-#define VERSION       0 // change this dependant on what version is running
+#define VERSION 0 ///< Service version.
 
 /// NET packet content type.
 typedef enum {
@@ -66,7 +66,7 @@ typedef union {
 
     @param  data : Byte array being added to buffer.
     @param  length : Length of byte array.
-    @param  mac : Address of node.
+    @param  mac : Address of destination node.
     @retval ERROR_OK : No errors.
     @retval ERROR_NET_NOBUFS : NET buffer is full.
 */
@@ -79,7 +79,7 @@ error_t net_tx(uint8_t *data, uint8_t length, uint8_t mac);
 
     @param  data : Byte array being added to buffer.
     @param  length : Length of byte array.
-    @param  mac : Address of node.
+    @param  mac : Address of sending node.
     @retval ERROR_OK : No errors.
     @retval ERROR_NET_NOBUFS : NET buffer is full.
 */
@@ -103,7 +103,7 @@ void net_tick(void);
     2. Pop TRAN data from buffer and pad with NET fields.
     3. Pass down to DLL for transmission.
 
-    @retval ERROR_OK : No errors.
+    @retval ERROR_OK : No errors or the buffer is empty.
     @retval ERROR_DLL_NOBUFS : DLL buffer is full.
 */
 error_t net_tx_handler(void);
@@ -137,11 +137,16 @@ error_t net_send_lsa(void);
 
 /**
     @brief  Convert NET packet to byte array.
+
+    @param  p : Packet to convert to array.
 */
 uint8_t *net_to_array(net_packet_t *p);
 
 /**
     @brief  Convert byte array to NET packet.
+
+    @param  data : Byte array to convert to structure.
+    @param  length : Length of data.
 */
 net_packet_t net_to_struct(uint8_t *data, uint8_t length);
 
@@ -156,27 +161,43 @@ typedef struct {
 
 #define MAX_BUFFER_SIZE 3
 
+/// Buffer type for NET layer
 typedef struct {
     bytestring_t buffer[MAX_BUFFER_SIZE];
     uint8_t head;
     uint8_t tail;
 } net_buffer_t;
 
-net_buffer_t net_tx_buffer;
-net_buffer_t net_rx_buffer;
+net_buffer_t net_tx_buffer; ///< TX buffer.
+net_buffer_t net_rx_buffer; ///< RX buffer.
 
 /**
-    @brief  Returns first element in buffer.
+    @brief  Push bytestring to buffer.
+
+    @param  buf : Buffer to add to.
+    @param  bs : Bytestring to add to buffer.
+    @see    net_tx_buffer
+    @see    net_rx_buffer
 */
 error_t net_buffer_push(net_buffer_t *buf, bytestring_t bs);
 
 /**
-    @brief  Returns first element in buffer.
+    @brief  Pop data from buffer.
+
+    @param  buf : Buffer to pop from.
+    @param  out_bs : Bytestring to pop the buffer to.
+    @see    net_tx_buffer
+    @see    net_rx_buffer
 */
 error_t net_buffer_pop(net_buffer_t *buf, bytestring_t *out_bs);
 
 /**
-    @brief  Return oldest data without incrementing the tail.
+    @brief  Get oldest data in buffer without popping.
+
+    @param  buf : Buffer to pop from.
+    @param  out_bs : Bytestring to pop the buffer to.
+    @see    net_tx_buffer
+    @see    net_rx_buffer
 */
 error_t net_buffer_peak(net_buffer_t *buf, bytestring_t *out_bs);
 
@@ -187,24 +208,13 @@ error_t net_buffer_peak(net_buffer_t *buf, bytestring_t *out_bs);
 */
 uint8_t net_buffer_size(net_buffer_t *buf);
 
-//---------- states ----------//
-
-// /// State machine states.
-// typedef enum {
-//     TX,
-//     RX,
-// } state_t;
-//
-// // memory for present/next states
-// state_t pres_s, next_s;
-
 //---------- temp functions ----------//
 
 error_t dll_tx(uint8_t *data, uint8_t length, uint8_t dest);
 error_t tran_rx(uint8_t *data, uint8_t length, uint8_t src);
 
+//---------- extra includes that fail up top ----------//
 
-// TODO refactor code
 #include "cksum.h"
 #include "net-packets.h"
 

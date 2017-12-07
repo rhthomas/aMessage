@@ -9,8 +9,8 @@
 
 //---------- global variables ----------//
 
-// TODO put them all up here
-bytestring_t pass;
+bytestring_t pass; ///< Global bytestring for passing around.
+uint8_t data[128]; ///< Global array for passing around.
 
 //---------- public methods ----------//
 
@@ -162,8 +162,7 @@ error_t net_rx_handler(void)
                 );
                 return err;
             case 2: // link state routing
-                // TODO Link state routing.
-                // add to table and continue flooding LSPs
+                // TODO what happens in version 2?
             default:
                 // not needed, pop before return
                 err = net_buffer_pop(&net_rx_buffer, &pass);
@@ -215,7 +214,7 @@ error_t net_rx_handler(void)
             net_buffer_pop(&net_rx_buffer, &pass);
             return err;
         case LSP:
-            // TODO Link state packets.
+            // TODO What do with LSPs?
             break;
         default:
             break;
@@ -238,7 +237,6 @@ error_t net_send_lsa(void)
 
 //---------- utility functions ----------//
 
-uint8_t data[128]; // TODO move up to globals
 uint8_t *net_to_array(net_packet_t *p)
 {
     // uint8_t data[128]; // <-- needs to be global
@@ -290,8 +288,6 @@ net_packet_t net_to_struct(uint8_t *data, uint8_t length)
 }
 
 //---------- buffers ----------//
-
-// TODO buffers not working after poping out the entire buffer.
 
 error_t net_buffer_push(net_buffer_t *buf, bytestring_t bs)
 {
