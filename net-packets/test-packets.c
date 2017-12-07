@@ -40,7 +40,7 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("ack packet\n");
+    printf("net_ack_packet\n");
     print_struct(
         net_ack_packet(0xAA, 0xAB)
     );
@@ -52,7 +52,7 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("lsa packet\n");
+    printf("net_lsa_packet\n");
     print_struct(
         net_lsa_packet(0xAA)
     );
@@ -64,7 +64,7 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("broadcast packet\n");
+    printf("net_bcast_packet\n");
     print_struct(
         net_bcast_packet(0xAA, tran_data, tran_data[4])
     );
@@ -76,7 +76,7 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("tran data packet\n");
+    printf("net_data_packet\n");
     print_struct(
         net_data_packet(
             0xAA,
