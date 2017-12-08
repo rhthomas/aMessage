@@ -8,7 +8,29 @@
 
 uint32_t seq = 0;
 
-net_packet_t net_lsp_packet(uint8_t src, uint8_t dest, ls_list_t *table)
+ls_packet_t ls_new_packet(uint8_t src, ls_elem_t *list)
+{
+    ls_packet_t p = {
+        .src = src,
+        .seq = seq++,
+        .age = START_AGE
+    };
+    for (uint8_t i=0; i<MAX_TABLE_SIZE; i++) {
+        p.connected[i] = list[i];
+    }
+    return p;
+}
+
+ls_packet_t array_to_lsp(uint8_t *array, uint8_t length)
+{
+    ls_packet_t p;
+    for (uint8_t i=0; i<length; i++) {
+        p.elem[i] = array[i];
+    }
+    return p;
+}
+
+net_packet_t net_lsp_packet(uint8_t src, ls_packet_t *lsp)
 {
     net_packet_t p = {
         .vers = VERSION,
@@ -17,11 +39,16 @@ net_packet_t net_lsp_packet(uint8_t src, uint8_t dest, ls_list_t *table)
         .ack  = 0,
         .res  = 0x00,
         .src_addr = src,
-        .dest_addr = dest, // bcast
-        .length = siz,
+        .dest_addr = 0x00, // bcast
+        .length = sizeof(ls_packet_t) + 7, // 7 = net overhead
         .tran = {0}, // min 8
         .cksum = 0x0000
     };
+
+    for (uint8_t i=0; i<sizeof(ls_packet_t); i++) {
+        p.tran[i] = lsp->elem[i];
+    }
+
     // fill TRAN field
     p.cksum = xor_sum(&p);
     return p;

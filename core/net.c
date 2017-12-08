@@ -46,7 +46,15 @@ void net_tick(void)
 {
     // TODO wrap this in modulo divider
     net_send_lsa(); // do this every 3s or something
-    update_node_table();
+
+    // update tables
+    switch (VERSION) {
+        case 0: break;
+        case 1: update_node_table(); break;
+        case 2: update_ls_table();   break;
+        default: break;
+    }
+
     net_tx_handler();
     net_rx_handler();
 }
@@ -75,7 +83,7 @@ error_t net_tx_handler(void)
     #endif // DEBUG
     print_array(pass.data, pass.length);
 
-    // TODO routing in here when LSA is working
+    // TODO search node tables or ls_list
 
     /* dont do this if debugging (testing the handler). we know this function
     works from the node-tables testbench. */
@@ -128,7 +136,7 @@ error_t net_rx_handler(void)
         return err;
     }
 
-    #ifndef DEBUG
+    #ifdef DEBUG
     printf("array\n");
     #endif
     print_array(pass.data, pass.length);
@@ -136,7 +144,7 @@ error_t net_rx_handler(void)
     // convert to packet
     net_packet_t p = net_to_struct(pass.data, pass.length);
 
-    #ifndef DEBUG
+    #ifdef DEBUG
     printf("struct\n");
     #endif
     print_struct(p);
@@ -146,8 +154,11 @@ error_t net_rx_handler(void)
         return err;
     }
 
-    // check address
-    if (p.dest_addr != LOCAL_ADDRESS) {
+    // check address isn't local or bcast
+    if ((p.dest_addr != LOCAL_ADDRESS) && (p.dest_addr != 0)) {
+        #ifdef DEBUG
+        printf("not for me or bcast\n");
+        #endif
         switch (p.vers) {
             case 0: // drop packet
                 return ERROR_NET_DROP;
@@ -170,25 +181,37 @@ error_t net_rx_handler(void)
         }
     }
 
+    #ifdef DEBUG
+    printf("packet for me\n");
+    #endif
     // packet meant for me, what do?
     int8_t index; // if defined inside switch it is out of scope?
     switch (p.type) {
         case LSA:
-            // search for node index, -1 if it does not exist
-            index = search_list(p.src_addr);
-            if (index < 0) {
-                // add to list of known nodes
-                new_node((node_t){p.src_addr, START_AGE});
+            // link state routing
+            if (VERSION == 2) {
+                // TODO implement search function
+                // add to ls_list
+                add_ls_table(array_to_lsp(p.tran, 21));
+                print_struct(net_lsp_packet(0xAA, &ls_list[0].lsp));
             } else {
-                // node in list, update age
-                known_nodes[index].node.age = START_AGE;
+                // search for node index, -1 if it does not exist
+                index = search_list(p.src_addr);
+                if (index < 0) {
+                    // add to list of known nodes
+                    new_node((node_t){p.src_addr, START_AGE});
+                } else {
+                    // node in list, update age
+                    known_nodes[index].node.age = START_AGE;
+                }
             }
+
             // reply if original message was NOT already an ACK
             if (p.ack == 0) {
                 // received LSA, queue up ACK reply
                 net_packet_t reply = net_ack_packet(
                     // reverse addresses
-                    p.dest_addr,
+                    LOCAL_ADDRESS,
                     p.src_addr // LOCAL_ADDRESS
                 );
                 // add to tx buffer
@@ -199,6 +222,7 @@ error_t net_rx_handler(void)
                 );
                 return err;
             }
+
             // if it was already an ACK, just add node and return
             // data not needed, pop before return
             err = net_buffer_pop(&net_rx_buffer, &pass);
@@ -210,11 +234,14 @@ error_t net_rx_handler(void)
                 p.length - 7, // 7 bytes of NET stuff
                 p.src_addr
             );
-            // TODO pop if error?
-            net_buffer_pop(&net_rx_buffer, &pass);
+            if (!err) {
+                net_buffer_pop(&net_rx_buffer, &pass);
+            }
             return err;
         case LSP:
-            // TODO What do with LSPs?
+            // add packet to table
+            add_ls_table(array_to_lsp(p.tran, 21));
+            print_struct(net_lsp_packet(LOCAL_ADDRESS, &ls_list[0].lsp));
             break;
         default:
             break;

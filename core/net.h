@@ -16,6 +16,7 @@
 #include "errors.h"
 #include "node-tables.h"
 // these are down the bottom to stop linker errors
+// #include "link-state.h"
 // #include "cksum.h"
 // #include "net-packets.h"
 
@@ -29,7 +30,7 @@
     #define LOCAL_ADDRESS eeprom_read_byte(MAC_EEPROM_LOC)
 #endif // DEBUG
 
-#define VERSION 0 ///< Service version.
+#define VERSION 2 ///< Service version.
 
 /// NET packet content type.
 typedef enum {
@@ -40,7 +41,7 @@ typedef enum {
 
 /// NET packet structure
 typedef union {
-    struct { //__attribute__((__packed__)) {
+    struct __attribute__((__packed__)) {
         // ctrl byte (LSb first)
         uint8_t    vers : 2;
         uint8_t    hop  : 3;
@@ -217,5 +218,6 @@ error_t tran_rx(uint8_t *data, uint8_t length, uint8_t src);
 
 #include "cksum.h"
 #include "net-packets.h"
+#include "link-state.h"
 
 #endif // NET_H
