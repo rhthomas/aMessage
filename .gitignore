@@ -1,7 +1,11 @@
-docs/html/
+# folders
+docs/
+shared/
+sandbox/
+flow/
+
+# files
 *.out
 *.o
 *.deps
-shared/
-sandbox/
 *.txt

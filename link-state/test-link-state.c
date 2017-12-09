@@ -2,8 +2,6 @@
 
     Testbench for network layer API calls and functions.
 
-    TODO write testbench for
-
 */
 
 #include "link-state.h"

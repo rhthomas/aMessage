@@ -11,6 +11,7 @@
 
 bytestring_t pass; ///< Global bytestring for passing around.
 uint8_t data[128]; ///< Global array for passing around.
+uint16_t timer_count; ///< Tick counter from timer every 10ms.
 
 //---------- public methods ----------//
 
@@ -44,8 +45,10 @@ error_t net_rx(uint8_t *data, uint8_t length, uint8_t mac)
 
 void net_tick(void)
 {
-    // TODO wrap this in modulo divider
-    net_send_lsa(); // do this every 3s or something
+    if (!(timer_count % 30000)) {
+        // timer ticks every 10ms, send LSA every 3s
+        net_send_lsa();
+    }
 
     // update tables
     switch (VERSION) {
@@ -66,15 +69,18 @@ error_t net_tx_handler(void)
     error_t err = 0;
 
     // return if the buffer is empty
-    if (!net_buffer_size(&net_tx_buffer)) {
-        #ifdef DEBUG
-        printf("[ TX ] tx buffer has nothing to pop\n");
-        #endif
-        return ERROR_OK;
-    }
+    // if (!net_buffer_size(&net_tx_buffer)) {
+    //     #ifdef DEBUG
+    //     printf("[ TX ] tx buffer has nothing to pop\n");
+    //     #endif
+    //     return ERROR_OK;
+    // }
 
     // pop data from tx handler
     if ((err = net_buffer_peak(&net_tx_buffer, &pass))) {
+        #ifdef DEBUG
+        printf("[ TX ] tx buffer has nothing to pop\n");
+        #endif
         return err;
     }
 
@@ -84,6 +90,7 @@ error_t net_tx_handler(void)
     print_array(pass.data, pass.length);
 
     // TODO search node tables or ls_list
+    // TODO routing dll_tx(data, len, first node in list)
 
     /* dont do this if debugging (testing the handler). we know this function
     works from the node-tables testbench. */
@@ -112,14 +119,14 @@ error_t net_tx_handler(void)
         printf("[ TX ] dll_tx error %d\n", err);
         #endif
         return err;
-    } else {
-        // everything is fine, pop and drop the packet
-        err = net_buffer_pop(&net_tx_buffer, &pass);
-        #ifndef DEBUG
-        printf("[ TX ] dll_tx no errors\n");
-        #endif
-        return ERROR_OK;
     }
+
+    // everything is fine, pop and drop the packet
+    net_buffer_pop(&net_tx_buffer, &pass);
+    #ifndef DEBUG
+    printf("[ TX ] dll_tx no errors\n");
+    #endif
+    return ERROR_OK;
 }
 
 error_t net_rx_handler(void)
@@ -127,9 +134,9 @@ error_t net_rx_handler(void)
     error_t err = 0;
 
     // return if the buffer is empty
-    if (!net_buffer_size(&net_rx_buffer)) {
-        return ERROR_OK;
-    }
+    // if (!net_buffer_size(&net_rx_buffer)) {
+    //     return ERROR_OK;
+    // }
 
     // pop data out of rx buffer
     if ((err = net_buffer_peak(&net_rx_buffer, &pass))) {
@@ -159,25 +166,24 @@ error_t net_rx_handler(void)
         #ifdef DEBUG
         printf("not for me or bcast\n");
         #endif
-        switch (p.vers) {
-            case 0: // drop packet
-                return ERROR_NET_DROP;
-            case 1: // flooding
-                // decrement hop counter, resend if hop counter ok
-                if (--p.hop == 0) return ERROR_NET_DROP;
-                // send packet back down to DLL to transmit.
-                err = dll_tx(
-                    net_to_array(&p),
-                    p.length,
-                    p.src_addr
-                );
-                return err;
-            case 2: // link state routing
-                // TODO what happens in version 2?
-            default:
-                // not needed, pop before return
-                err = net_buffer_pop(&net_rx_buffer, &pass);
-                return ERROR_OK;
+        if (p.vers == 0) {
+            #ifdef DEBUG
+            printf("dropping packet\n");
+            #endif
+            return ERROR_NET_DROP;
+        } else {
+            #ifdef DEBUG
+            printf("flooding packet\n");
+            #endif
+            // decrement hop counter, resend if hop counter ok
+            if (--p.hop == 0) return ERROR_NET_DROP;
+            // send packet back down to DLL to transmit.
+            err = dll_tx(
+                net_to_array(&p),
+                p.length,
+                p.dest_addr
+            );
+            return err;
         }
     }
 
@@ -188,22 +194,14 @@ error_t net_rx_handler(void)
     int8_t index; // if defined inside switch it is out of scope?
     switch (p.type) {
         case LSA:
-            // link state routing
-            if (VERSION == 2) {
-                // TODO implement search function
-                // add to ls_list
-                add_ls_table(array_to_lsp(p.tran, 21));
-                print_struct(net_lsp_packet(0xAA, &ls_list[0].lsp));
+            // search for node index, -1 if it does not exist
+            index = search_list(p.src_addr);
+            if (index < 0) {
+                // add to list of known nodes
+                new_node((node_t){p.src_addr, START_AGE});
             } else {
-                // search for node index, -1 if it does not exist
-                index = search_list(p.src_addr);
-                if (index < 0) {
-                    // add to list of known nodes
-                    new_node((node_t){p.src_addr, START_AGE});
-                } else {
-                    // node in list, update age
-                    known_nodes[index].node.age = START_AGE;
-                }
+                // node in list, update age
+                known_nodes[index].node.age = START_AGE;
             }
 
             // reply if original message was NOT already an ACK
@@ -214,6 +212,9 @@ error_t net_rx_handler(void)
                     LOCAL_ADDRESS,
                     p.src_addr // LOCAL_ADDRESS
                 );
+                #ifdef DEBUG
+                printf("Send ACK\n");
+                #endif
                 // add to tx buffer
                 err = dll_tx(
                     net_to_array(&reply),
@@ -236,12 +237,18 @@ error_t net_rx_handler(void)
             );
             if (!err) {
                 net_buffer_pop(&net_rx_buffer, &pass);
+                #ifdef DEBUG
+                printf("Passed up to TRAN\n");
+                #endif
             }
             return err;
         case LSP:
             // add packet to table
             add_ls_table(array_to_lsp(p.tran, 21));
             print_struct(net_lsp_packet(LOCAL_ADDRESS, &ls_list[0].lsp));
+            #ifdef DEBUG
+            printf("Added LSP to table\n");
+            #endif
             break;
         default:
             break;

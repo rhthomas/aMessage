@@ -14,6 +14,8 @@
 #ifndef LINK_STATE_H
 #define LINK_STATE_H
 
+#include <stdbool.h>
+
 #include "net.h"
 #include "node-tables.h"
 
@@ -74,7 +76,7 @@ ls_packet_t array_to_lsp(uint8_t *array, uint8_t length);
 
     @param  src : Address of sender.
     @param  lsp : Link state packet of source node.
-    @TODO   Check the sequence number in the list.
+    @note   Sequence number will auto-overflow.
     @return A NET packet.
 */
 net_packet_t net_lsp_packet(uint8_t src, ls_packet_t *lsp);
@@ -93,6 +95,22 @@ void add_ls_table(ls_packet_t lsp);
     Decrements the age of each node in the list.
 */
 void update_ls_table(void);
+
+/**
+    @brief  Search to see if a node is already in the table.
+
+    @param  src : Address to search for.
+    @return Index of src node.
+    @retval -1 : Node does not exist.
+*/
+int8_t search_ls_list(uint8_t src);
+
+/**
+    @brief  Searches tree for shortest distance.
+
+    @param  spt_set : Array of shortest path tree, set.
+*/
+int8_t min_distance(uint8_t dist[], bool spt_set[]);
 
 /**
     @brief  Calculate shortest route from src to dest.
