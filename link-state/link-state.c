@@ -103,7 +103,7 @@ int8_t search_ls_list(uint8_t src)
 
 int8_t min_distance(uint8_t dist[], bool spt_set[])
 {
-    int8_t min = 0xFF, min_index;
+    int8_t min = 0xFF, min_index = 0;
 
     for (uint8_t i=0; i<MAX_TABLE_SIZE; i++) {
         if (spt_set[i] == false && dist[i] <= min) {

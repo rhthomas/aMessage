@@ -24,7 +24,15 @@ void print(void)
 
 int main(void)
 {
-    printf("test add too many\n");
+    /*--------------------------------------------------------------------------
+    TEST: new_node
+
+    Stress test adding too many nodes to the list. It should simply return early
+    if there is no room in the array.
+
+    PASS: Y
+    --------------------------------------------------------------------------*/
+    printf("----------\ntest add too many\n----------\n");
     for (int i=0; i<15; i++) {
         printf("[ list ]\t");
         new_node(
@@ -34,7 +42,15 @@ int main(void)
     }
     printf("\n");
 
-    printf("test searching\n");
+    /*--------------------------------------------------------------------------
+    TEST: search_list
+
+    Test searching through the list for node 0x03. This function returns the
+    index of the node in the array.
+
+    PASS: Y
+    --------------------------------------------------------------------------*/
+    printf("----------\ntest searching\n----------\n");
     printf("[search]\t");
     int8_t index = search_list(0x03);
     if (index == -1) {
@@ -44,7 +60,15 @@ int main(void)
     }
     printf("\n");
 
-    printf("test updating\n");
+    /*--------------------------------------------------------------------------
+    TEST: update_node_table
+
+    Check that the function correctly iterates through the table, deleting nodes
+    if their age == 0.
+
+    PASS: Y
+    --------------------------------------------------------------------------*/
+    printf("----------\ntest updating\n----------\n");
     for (int i=0; i<0xF; i++) {
         printf("[update]\t");
         update_node_table();
@@ -52,7 +76,14 @@ int main(void)
     }
     printf("\n");
 
-    printf("test missing\n");
+    /*--------------------------------------------------------------------------
+    TEST: search_list
+
+    Test that if searching for an unknown node, the function returns -1.
+
+    PASS: Y
+    --------------------------------------------------------------------------*/
+    printf("----------\ntest missing\n----------\n");
     printf("[search]\t");
     index = search_list(0x03);
     if (index == -1) {

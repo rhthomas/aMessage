@@ -15,16 +15,29 @@ uint8_t test_lsp_array[] = {
 
 int main()
 {
-    ls_elem_t conn[MAX_TABLE_SIZE] = {
-        {0xAB, 1},
-        {0xAC, 1},
-        {0xBA, 2}
+    printf("make lsp\n");
+    ls_packet_t lsp = {
+        .src = LOCAL_ADDRESS,
+        .seq = 0,
+        .age = 50,
+        .connected = {
+            {0xAB, 1},
+            {0xAC, 1},
+            {0xBA, 2}
+        }
     };
+    printf("add\n");
+    add_ls_table(lsp);
+
+    printf("make net\n");
+    net_packet_t p = net_lsp_packet(LOCAL_ADDRESS, &lsp);
+    printf("print\n");
+    print_struct(p);
 
     for (int i=0; i<3; i++) {
-        ls_packet_t p = ls_new_packet(0xAA, conn);
+        ls_packet_t p = ls_new_packet(0xBC, lsp.connected);
         add_ls_table(p); // adds to ls_list
-        print_struct(net_lsp_packet(0xAA, &ls_list[i].lsp));
+        print_struct(net_lsp_packet(0xBC, &ls_list[i].lsp));
     }
 
     ls_packet_t q = array_to_lsp(test_lsp_array, sizeof(test_lsp_array));

@@ -24,13 +24,15 @@
 #define NULL (void *)0
 #endif // NULL
 
-#ifdef DEBUG
-    #define LOCAL_ADDRESS 0xAA
-#else
-    #define LOCAL_ADDRESS eeprom_read_byte(MAC_EEPROM_LOC)
-#endif // DEBUG
+#define LOCAL_ADDRESS 0xAA
+// #ifdef DEBUG
+//     #define LOCAL_ADDRESS 0xAA
+// #else
+//     #define MAC_EEPROM_LOC E2END
+//     #define LOCAL_ADDRESS  eeprom_read_byte(MAC_EEPROM_LOC)
+// #endif // DEBUG
 
-#define VERSION 2 ///< Service version.
+#define VERSION 1 ///< Service version.
 
 /// NET packet content type.
 typedef enum {
@@ -200,7 +202,7 @@ error_t net_buffer_pop(net_buffer_t *buf, bytestring_t *out_bs);
     @see    net_tx_buffer
     @see    net_rx_buffer
 */
-error_t net_buffer_peak(net_buffer_t *buf, bytestring_t *out_bs);
+error_t net_buffer_peek(net_buffer_t *buf, bytestring_t *out_bs);
 
 /**
     @brief  Get the size of the buffer.
@@ -219,5 +221,7 @@ error_t tran_rx(uint8_t *data, uint8_t length, uint8_t src);
 #include "cksum.h"
 #include "net-packets.h"
 #include "link-state.h"
+
+// #include "transport.h"
 
 #endif // NET_H

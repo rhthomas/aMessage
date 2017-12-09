@@ -34,7 +34,7 @@ int main()
     };
 
     net_packet_t p = net_to_struct(net_data, sizeof(net_data));
-    printf("initial data\n");
+    printf("----------\ninitial data\n----------\n");
     print_struct(p);
 
     /*--------------------------------------------------------------------------
@@ -44,7 +44,7 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("compute checksum\n");
+    printf("----------\ncompute checksum\n----------\n");
     p.cksum  = xor_sum(&p);
     print_struct(p);
 
@@ -55,6 +55,7 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
+    printf("----------\nvalidate checksum\n----------\n");
     error_t err = 0;
     if (!(err = valid_cksum(&p))) {
         printf("checksum correct\n");

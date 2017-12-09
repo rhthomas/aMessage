@@ -64,7 +64,7 @@ bytestring_t bs;
 
 int main()
 {
-    printf("initial array\n");
+    printf("----------\ninitial array\n----------\n");
     print_array(net_data, sizeof(net_data));
 
     /*--------------------------------------------------------------------------
@@ -74,7 +74,7 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("net_to_struct\n");
+    printf("----------\nnet_to_struct\n----------\n");
     net_packet_t p = net_to_struct(net_data, sizeof(net_data));
     print_struct(p);
 
@@ -86,7 +86,7 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("net_to_array\n");
+    printf("----------\nnet_to_array\n----------\n");
     uint8_t *out_data = net_to_array(&p);
     print_array(out_data, 128);
 
@@ -99,42 +99,42 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("net_buffer_push\n");
+    printf("----------\nnet_buffer_push\n----------\n");
     // push to the buffer a few times
     for (int i=0; i<3; i++) {
         bs.length = sizeof(tran_data);
         bs.mac = tran_data[3];
-        for (int j=0; j<128; j++) {
+        for (int j=0; j<121; j++) {
             bs.data[j] = tran_data[j] + i;
         }
         err = net_buffer_push(&net_tx_buffer, bs);
         if (!err) {
-            printf("[ push ] %d item(s) in buffer\n", net_buffer_size(&net_tx_buffer));
+            printf("%d item(s) in buffer\n", net_buffer_size(&net_tx_buffer));
             print_array(net_tx_buffer.buffer[i].data, net_tx_buffer.buffer[i].length);
         } else {
-            printf("[ push ] error %d\n", err);
+            printf("error %d\n", err);
         }
     }
     printf("\n");
 
     /*--------------------------------------------------------------------------
-    TEST: net_buffer_peak
+    TEST: net_buffer_peek
 
-    Attempt to peak at the net_tx_buffer 3 times. Should return the same data
-    every time since peak shows the oldest buffer data (FIFO). Would only return
+    Attempt to peek at the net_tx_buffer 3 times. Should return the same data
+    every time since peek shows the oldest buffer data (FIFO). Would only return
     an error if the buffer was empty. This condition is not tested here.
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("net_buffer_peak\n");
+    printf("----------\nnet_buffer_peek\n----------\n");
     // bytestring_t bs;
     for (int i=0; i<3; i++) {
-        err = net_buffer_peak(&net_tx_buffer, &bs);
+        err = net_buffer_peek(&net_tx_buffer, &bs);
         if (!err) {
-            printf("[ peak ] %d item(s) in buffer\n", net_buffer_size(&net_tx_buffer));
+            printf("%d item(s) in buffer\n", net_buffer_size(&net_tx_buffer));
             print_array(bs.data, bs.length);
         } else {
-            printf("[ peak ] error %d\n", err);
+            printf("error %d\n", err);
         }
     }
     printf("\n");
@@ -148,14 +148,14 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("net_buffer_pop\n");
+    printf("----------\nnet_buffer_pop\n----------\n");
     for (int i=0; i<8; i++) {
         // err = net_buffer_pop(&net_tx_buffer, &bs);
         if (!(err = net_buffer_pop(&net_tx_buffer, &bs))) {
-            printf("[ pop  ] %d item(s) in buffer\n", net_buffer_size(&net_tx_buffer));
+            printf("%d item(s) in buffer\n", net_buffer_size(&net_tx_buffer));
             print_array(bs.data, bs.length);
         } else {
-            printf("[ pop  ] error %d\n", err);
+            printf("error %d\n", err);
         }
     }
     printf("\n");
@@ -168,13 +168,13 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("net_tx\n");
+    printf("----------\nnet_tx\n----------\n");
     // push data to tx buffer
     err = net_tx(tran_data, tran_data[4], 0xAB);
     if (!err) {
-        printf("[ TX  ] net_tx no errors\n");
+        printf("net_tx no errors\n");
     } else {
-        printf("[ TX  ] net_tx error %d\n", err);
+        printf("net_tx error %d\n", err);
     }
     printf("\n");
 
@@ -186,12 +186,12 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("net_tx_handler\n");
+    printf("----------\nnet_tx_handler\n----------\n");
     err = net_tx_handler();
     if (!err) {
-        printf("[ TX  ] net_tx_handler no errors\n");
+        printf("net_tx_handler no errors\n");
     } else {
-        printf("[ TX  ] net_tx_handler error %d\n", err);
+        printf("net_tx_handler error %d\n", err);
     }
     printf("\n");
 
@@ -203,13 +203,13 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("net_rx\n");
+    printf("----------\nnet_rx\n----------\n");
     // push data to rx buffer
     err = net_rx(net_data, sizeof(net_data), 0xAB);
     if (!err) {
-        printf("[ RX  ] net_rx no errors\n");
+        printf("net_rx no errors\n");
     } else {
-        printf("[ RX  ] net_rx error %d\n", err);
+        printf("net_rx error %d\n", err);
     }
     printf("\n");
 
@@ -221,12 +221,12 @@ int main()
 
     PASS: Y
     --------------------------------------------------------------------------*/
-    printf("net_rx_handler\n");
+    printf("----------\nnet_rx_handler\n----------\n");
     err = net_rx_handler();
     if (!err) {
-        printf("[ RX  ] net_rx_handler no errors\n");
+        printf("net_rx_handler no errors\n");
     } else {
-        printf("[ RX  ] net_rx_handler error %d\n", err);
+        printf("net_rx_handler error %d\n", err);
     }
     printf("\n");
 
@@ -261,9 +261,10 @@ int main()
         // checksum[2]
         0x00, 0x66
     };
-    printf("link state stuff\n");
+    printf("----------\nlink state stuff\n----------\n");
     print_array(lsp_data, 128);
 
+    // make sure buffer is empty
     while (net_buffer_size(&net_rx_buffer)) {
         net_buffer_pop(&net_rx_buffer, &bs);
     }
@@ -271,17 +272,17 @@ int main()
     // push data to tx buffer
     err = net_rx(lsp_data, sizeof(lsp_data), lsp_data[2]);
     if (!err) {
-        printf("[ RX  ] net_rx no errors\n");
+        printf("net_rx no errors\n");
     } else {
-        printf("[ RX  ] net_rx error %d\n", err);
+        printf("net_rx error %d\n", err);
     }
     printf("\n");
 
     err = net_rx_handler();
     if (!err) {
-        printf("[ RX  ] net_rx_handler no errors\n");
+        printf("net_rx_handler no errors\n");
     } else {
-        printf("[ RX  ] net_rx_handler error %d\n", err);
+        printf("net_rx_handler error %d\n", err);
     }
     printf("\n");
 

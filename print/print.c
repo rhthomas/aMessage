@@ -2,13 +2,16 @@
 
 void format(int i)
 {
+    #ifdef DEBUG
     if (!((i+1) % 8)) printf("\n");
     else printf("\t");
+    #endif // DEBUG
 }
 
 void print_struct(net_packet_t p)
 {
     #ifdef DEBUG
+    printf("[ NET ]\tprint struct\n");
     for (uint8_t i=0; i<128; i++) {
         printf("0x%02x", p.elem[i]);
         // skip any unused TRAN data
@@ -25,6 +28,7 @@ void print_struct(net_packet_t p)
 void print_array(uint8_t *a, uint8_t length)
 {
     #if DEBUG
+    printf("[ NET ]\tprint array\n");
     for (uint8_t i=0; i<length; i++) {
         printf("0x%02x", a[i]);
         // skip any unused TRAN data

@@ -1,7 +1,7 @@
 CC        = clang
 OBJ       = $(patsubst %.c,%.o,$(SRC))
 INC       = $(addprefix -I,$(sort $(dir $(SRC)))) -I../shared
-CFLAGS    = $(INC) -Wall
+CFLAGS    = $(INC) -Wall -std=c99 #-mmcu=atmega644p -O3 -DF_CPU=12000000
 MAKEFLAGS = -j4 --quiet
 
 default: Makefile.deps $(TARGET).out

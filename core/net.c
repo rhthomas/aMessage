@@ -51,13 +51,10 @@ void net_tick(void)
     }
 
     // update tables
-    switch (VERSION) {
-        case 0: break;
-        case 1: update_node_table(); break;
-        case 2: update_ls_table();   break;
-        default: break;
-    }
+    update_node_table();
+    if (VERSION == 2) update_ls_table();
 
+    // handlers
     net_tx_handler();
     net_rx_handler();
 }
@@ -68,25 +65,10 @@ error_t net_tx_handler(void)
 {
     error_t err = 0;
 
-    // return if the buffer is empty
-    // if (!net_buffer_size(&net_tx_buffer)) {
-    //     #ifdef DEBUG
-    //     printf("[ TX ] tx buffer has nothing to pop\n");
-    //     #endif
-    //     return ERROR_OK;
-    // }
-
     // pop data from tx handler
-    if ((err = net_buffer_peak(&net_tx_buffer, &pass))) {
-        #ifdef DEBUG
-        printf("[ TX ] tx buffer has nothing to pop\n");
-        #endif
+    if ((err = net_buffer_peek(&net_tx_buffer, &pass))) {
         return err;
     }
-
-    #ifdef DEBUG
-    printf("array\n");
-    #endif // DEBUG
     print_array(pass.data, pass.length);
 
     // TODO search node tables or ls_list
@@ -108,15 +90,13 @@ error_t net_tx_handler(void)
         pass.data,
         pass.length
     );
-
-    printf("struct\n");
     print_struct(p);
 
     // pass down to dll, return error
     if ((err = dll_tx(net_to_array(&p), p.length, p.dest_addr))) {
         // there was an error
         #ifndef DEBUG
-        printf("[ TX ] dll_tx error %d\n", err);
+        printf("[ NET ]\tdll_tx error %d\n", err);
         #endif
         return err;
     }
@@ -124,7 +104,7 @@ error_t net_tx_handler(void)
     // everything is fine, pop and drop the packet
     net_buffer_pop(&net_tx_buffer, &pass);
     #ifndef DEBUG
-    printf("[ TX ] dll_tx no errors\n");
+    printf("[ NET ]\tdll_tx no errors\n");
     #endif
     return ERROR_OK;
 }
@@ -133,27 +113,14 @@ error_t net_rx_handler(void)
 {
     error_t err = 0;
 
-    // return if the buffer is empty
-    // if (!net_buffer_size(&net_rx_buffer)) {
-    //     return ERROR_OK;
-    // }
-
     // pop data out of rx buffer
-    if ((err = net_buffer_peak(&net_rx_buffer, &pass))) {
+    if ((err = net_buffer_peek(&net_rx_buffer, &pass))) {
         return err;
     }
-
-    #ifdef DEBUG
-    printf("array\n");
-    #endif
     print_array(pass.data, pass.length);
 
     // convert to packet
     net_packet_t p = net_to_struct(pass.data, pass.length);
-
-    #ifdef DEBUG
-    printf("struct\n");
-    #endif
     print_struct(p);
 
     // check checksum
@@ -164,16 +131,16 @@ error_t net_rx_handler(void)
     // check address isn't local or bcast
     if ((p.dest_addr != LOCAL_ADDRESS) && (p.dest_addr != 0)) {
         #ifdef DEBUG
-        printf("not for me or bcast\n");
+        printf("[ NET ]\tnot for me or bcast\n");
         #endif
         if (p.vers == 0) {
             #ifdef DEBUG
-            printf("dropping packet\n");
+            printf("[ NET ]\tdropping packet\n");
             #endif
             return ERROR_NET_DROP;
         } else {
             #ifdef DEBUG
-            printf("flooding packet\n");
+            printf("[ NET ]\tflooding packet\n");
             #endif
             // decrement hop counter, resend if hop counter ok
             if (--p.hop == 0) return ERROR_NET_DROP;
@@ -188,7 +155,7 @@ error_t net_rx_handler(void)
     }
 
     #ifdef DEBUG
-    printf("packet for me\n");
+    printf("[ NET ]\tpacket for me\n");
     #endif
     // packet meant for me, what do?
     int8_t index; // if defined inside switch it is out of scope?
@@ -203,17 +170,16 @@ error_t net_rx_handler(void)
                 // node in list, update age
                 known_nodes[index].node.age = START_AGE;
             }
-
             // reply if original message was NOT already an ACK
             if (p.ack == 0) {
                 // received LSA, queue up ACK reply
                 net_packet_t reply = net_ack_packet(
                     // reverse addresses
                     LOCAL_ADDRESS,
-                    p.src_addr // LOCAL_ADDRESS
+                    p.src_addr
                 );
                 #ifdef DEBUG
-                printf("Send ACK\n");
+                printf("[ NET ]\tSend ACK down to DLL\n");
                 #endif
                 // add to tx buffer
                 err = dll_tx(
@@ -223,10 +189,9 @@ error_t net_rx_handler(void)
                 );
                 return err;
             }
-
             // if it was already an ACK, just add node and return
             // data not needed, pop before return
-            err = net_buffer_pop(&net_rx_buffer, &pass);
+            net_buffer_pop(&net_rx_buffer, &pass);
             return ERROR_OK;
         case APP:
             // pass up to TRAN layer.
@@ -238,7 +203,7 @@ error_t net_rx_handler(void)
             if (!err) {
                 net_buffer_pop(&net_rx_buffer, &pass);
                 #ifdef DEBUG
-                printf("Passed up to TRAN\n");
+                printf("[ NET ]\tPassed up to TRAN\n");
                 #endif
             }
             return err;
@@ -247,7 +212,7 @@ error_t net_rx_handler(void)
             add_ls_table(array_to_lsp(p.tran, 21));
             print_struct(net_lsp_packet(LOCAL_ADDRESS, &ls_list[0].lsp));
             #ifdef DEBUG
-            printf("Added LSP to table\n");
+            printf("[ NET ]\tAdded LSP to table\n");
             #endif
             break;
         default:
@@ -265,7 +230,7 @@ error_t net_send_lsa(void)
     return dll_tx(
         net_to_array(&p),
         p.length,
-        LOCAL_ADDRESS
+        p.dest_addr // bcast
     );
 }
 
@@ -341,6 +306,9 @@ error_t net_buffer_push(net_buffer_t *buf, bytestring_t bs)
         buf->head = next;
         return ERROR_OK;
     }
+    #ifdef DEBUG
+    printf("[ NET ]\tbuffer is full\n");
+    #endif
     return ERROR_NET_NOBUFS;
 }
 
@@ -348,6 +316,9 @@ error_t net_buffer_pop(net_buffer_t *buf, bytestring_t *out_bs)
 {
     // return if the buffer is empty
     if (buf->head == buf->tail) {
+        #ifdef DEBUG
+        printf("[ NET ]\ttx buffer has nothing to pop\n");
+        #endif
         return ERROR_NET_NOBUFS;
     }
     // buffer not empty, send data to out_bs
@@ -360,10 +331,13 @@ error_t net_buffer_pop(net_buffer_t *buf, bytestring_t *out_bs)
     return ERROR_OK;
 }
 
-error_t net_buffer_peak(net_buffer_t *buf, bytestring_t *out_bs)
+error_t net_buffer_peek(net_buffer_t *buf, bytestring_t *out_bs)
 {
     // return if the buffer is empty
     if (buf->head == buf->tail) {
+        #ifdef DEBUG
+        printf("[ NET ]\ttx buffer has nothing to pop\n");
+        #endif
         return ERROR_NET_NOBUFS;
     }
     // buffer not empty, send data to out_bs
