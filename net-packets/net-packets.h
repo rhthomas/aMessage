@@ -1,6 +1,6 @@
 /**
 
-    @file   net-packet.h
+    @file   net-packets.h
     @author Rhys Thomas <rt8g15@soton.ac.uk>
     @date   2017-11-30T11:20
 
@@ -13,10 +13,6 @@
 
 #include "net.h"
 #include "cksum.h"
-
-#ifndef VERSION
-#define VERSION 0
-#endif // VERSION
 
 /**
     @brief  Create acknoledgement packets.
