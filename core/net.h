@@ -24,15 +24,7 @@
 #define NULL (void *)0
 #endif // NULL
 
-#define LOCAL_ADDRESS 0xAA
-// #ifdef DEBUG
-//     #define LOCAL_ADDRESS 0xAA
-// #else
-//     #define MAC_EEPROM_LOC E2END
-//     #define LOCAL_ADDRESS  eeprom_read_byte(MAC_EEPROM_LOC)
-// #endif // DEBUG
-
-#define VERSION 1 ///< Service version.
+#define VERSION 0 ///< Service version.
 
 /// NET packet content type.
 typedef enum {
@@ -143,7 +135,7 @@ error_t net_send_lsa(void);
 
     @param  p : Packet to convert to array.
 */
-uint8_t *net_to_array(net_packet_t *p);
+uint8_t *net_to_array(net_packet_t *p, uint8_t length);
 
 /**
     @brief  Convert byte array to NET packet.
@@ -213,7 +205,7 @@ uint8_t net_buffer_size(net_buffer_t *buf);
 
 //---------- temp functions ----------//
 
-error_t dll_tx(uint8_t *data, uint8_t length, uint8_t dest);
+// error_t dll_tx(uint8_t *data, uint8_t length, uint8_t dest);
 error_t tran_rx(uint8_t *data, uint8_t length, uint8_t src);
 
 //---------- extra includes that fail up top ----------//

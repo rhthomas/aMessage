@@ -5,7 +5,8 @@
 */
 
 #include "net.h"
-#include "print.h"
+#include <stdio.h>
+// #include "print.h"
 
 // error handler
 error_t err = 0;
@@ -65,7 +66,7 @@ bytestring_t bs;
 int main()
 {
     printf("----------\ninitial array\n----------\n");
-    print_array(net_data, sizeof(net_data));
+    //print_array(net_data, sizeof(net_data));
 
     /*--------------------------------------------------------------------------
     TEST: net_to_struct
@@ -76,7 +77,7 @@ int main()
     --------------------------------------------------------------------------*/
     printf("----------\nnet_to_struct\n----------\n");
     net_packet_t p = net_to_struct(net_data, sizeof(net_data));
-    print_struct(p);
+    //print_struct(p);
 
     /*--------------------------------------------------------------------------
     TEST: net_to_array
@@ -88,7 +89,7 @@ int main()
     --------------------------------------------------------------------------*/
     printf("----------\nnet_to_array\n----------\n");
     uint8_t *out_data = net_to_array(&p);
-    print_array(out_data, 128);
+    //print_array(out_data, 128);
 
     /*--------------------------------------------------------------------------
     TEST: net_buffer_push
@@ -110,7 +111,7 @@ int main()
         err = net_buffer_push(&net_tx_buffer, bs);
         if (!err) {
             printf("%d item(s) in buffer\n", net_buffer_size(&net_tx_buffer));
-            print_array(net_tx_buffer.buffer[i].data, net_tx_buffer.buffer[i].length);
+            //print_array(net_tx_buffer.buffer[i].data, net_tx_buffer.buffer[i].length);
         } else {
             printf("error %d\n", err);
         }
@@ -132,7 +133,7 @@ int main()
         err = net_buffer_peek(&net_tx_buffer, &bs);
         if (!err) {
             printf("%d item(s) in buffer\n", net_buffer_size(&net_tx_buffer));
-            print_array(bs.data, bs.length);
+            //print_array(bs.data, bs.length);
         } else {
             printf("error %d\n", err);
         }
@@ -153,7 +154,7 @@ int main()
         // err = net_buffer_pop(&net_tx_buffer, &bs);
         if (!(err = net_buffer_pop(&net_tx_buffer, &bs))) {
             printf("%d item(s) in buffer\n", net_buffer_size(&net_tx_buffer));
-            print_array(bs.data, bs.length);
+            //print_array(bs.data, bs.length);
         } else {
             printf("error %d\n", err);
         }
@@ -262,7 +263,7 @@ int main()
         0x00, 0x66
     };
     printf("----------\nlink state stuff\n----------\n");
-    print_array(lsp_data, 128);
+    //print_array(lsp_data, 128);
 
     // make sure buffer is empty
     while (net_buffer_size(&net_rx_buffer)) {
