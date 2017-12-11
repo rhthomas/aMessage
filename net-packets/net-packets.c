@@ -4,7 +4,7 @@ net_packet_t net_ack_packet(uint8_t src, uint8_t dest)
 {
     net_packet_t p = {
         .vers = VERSION,
-        .hop  = 0b111,
+        .hop  = 2u,
         .type = LSA, // replying to LSA from new node
         .ack  = 0b1,
         .res  = 0x00,
@@ -22,7 +22,7 @@ net_packet_t net_lsa_packet(uint8_t src)
 {
     net_packet_t p = {
         .vers = VERSION,
-        .hop  = 0b111,
+        .hop  = 2u,
         .type = LSA,
         .ack  = 0,
         .res  = 0x00,
@@ -40,7 +40,7 @@ net_packet_t net_bcast_packet(uint8_t src, uint8_t *data, uint8_t data_len)
 {
     net_packet_t p = {
         .vers = VERSION,
-        .hop  = 0b111,
+        .hop  = 2u,
         .type = APP,
         .ack  = 0,
         .res  = 0x00,
@@ -63,7 +63,7 @@ net_packet_t net_data_packet(uint8_t src, uint8_t dest, uint8_t *data,
 {
     net_packet_t p = {
         .vers = VERSION,
-        .hop  = 0b111,
+        .hop  = 2u,
         .type = APP,
         .ack  = 0,
         .res  = 0x00,

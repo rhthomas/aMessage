@@ -17,13 +17,13 @@
 #define START_AGE 5000 // 1ms function call period = 5s life
 
 typedef struct {
-    uint8_t  addr;
-    uint16_t age;
+    uint8_t  addr; ///< Address of node.
+    uint16_t age;  ///< Age of node LSA. When 0 discard node since its dead.
 } node_t;
 
 typedef struct {
     uint8_t occupied; ///< Is this memory address occupied?
-    node_t  node;
+    node_t  node;     ///< Address of node in this memory slot.
 } node_list_t;
 
 node_list_t known_nodes[MAX_NODES];

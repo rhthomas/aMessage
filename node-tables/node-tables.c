@@ -1,4 +1,5 @@
 #include "node-tables.h"
+#include "uart.h"
 
 void new_node(node_t add)
 {
@@ -6,6 +7,9 @@ void new_node(node_t add)
         if (!(known_nodes[i].occupied)) {
             known_nodes[i].occupied = 1;
             known_nodes[i].node = add;
+            put_str(" [NET] Added new node: ");
+            put_hex(add.addr);
+            put_str("\r\n");
             return;
         }
     }
@@ -18,6 +22,9 @@ void update_node_table()
             if (--known_nodes[i].node.age == 0) {
                 // node dead, free memory
                 known_nodes[i].occupied = 0;
+                put_str(" [NET] Node ");
+                put_hex(known_nodes[i].node.addr);
+                put_str(" dead.\r\n");
             }
         }
     }

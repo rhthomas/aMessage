@@ -25,8 +25,7 @@
 /**
     @brief  Calculate 8-bit XOR checksum.
 
-    @param  data : Data to checksum.
-    @param  length : Length of data.
+    @param  p : Pointer to packet to calculate the checksum.
     @return XOR sum of data.
 */
 uint16_t xor_sum(net_packet_t *p);
@@ -34,8 +33,7 @@ uint16_t xor_sum(net_packet_t *p);
 /**
     @brief  Validate checksum.
 
-    @param  data : Data to checksum.
-    @param  length : Length of data.
+    @param  p : Pointer to packet whos checksum is to be validated.
     @retval ERROR_OK : Checksum passed.
     @retval ERROR_INV_CKSUM : Checksum invalid.
 */

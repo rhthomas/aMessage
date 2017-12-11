@@ -15,16 +15,12 @@
 
 #include "errors.h"
 #include "node-tables.h"
-// these are down the bottom to stop linker errors
-// #include "link-state.h"
-// #include "cksum.h"
-// #include "net-packets.h"
 
 #ifndef NULL
 #define NULL (void *)0
 #endif // NULL
 
-#define VERSION 0 ///< Service version.
+#define VERSION 1 ///< Service version.
 
 /// NET packet content type.
 typedef enum {
@@ -205,7 +201,6 @@ uint8_t net_buffer_size(net_buffer_t *buf);
 
 //---------- temp functions ----------//
 
-// error_t dll_tx(uint8_t *data, uint8_t length, uint8_t dest);
 error_t tran_rx(uint8_t *data, uint8_t length, uint8_t src);
 
 //---------- extra includes that fail up top ----------//
@@ -213,7 +208,5 @@ error_t tran_rx(uint8_t *data, uint8_t length, uint8_t src);
 #include "cksum.h"
 #include "net-packets.h"
 #include "link-state.h"
-
-// #include "transport.h"
 
 #endif // NET_H
